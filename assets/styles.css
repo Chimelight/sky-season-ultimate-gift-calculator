@@ -77,6 +77,11 @@ input:focus { outline: none; box-shadow: 0 0 0 2px rgba(100,150,200,0.3); }
 .cc pre.post { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px; padding-right: 78px; font-family: var(--font-mono); font-size: 12px; white-space: pre-wrap; max-height: 480px; overflow-y: auto; margin: 0; line-height: 1.55; }
 .cc .note { font-size: 12px; color: var(--color-text-secondary); margin-top: 6px; }
 .cc .legend { display: flex; gap: 12px; margin-top: 6px; font-size: 11px; color: var(--color-text-secondary); flex-wrap: wrap; }
+.cc .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.cc .skip-tbl input[type=number] { width: 52px; }
+.cc .target-badge { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 999px; background: var(--color-background-info); color: var(--color-text-info); margin-left: 6px; font-weight: 500; }
+.cc input[type=radio] { margin: 0 4px 0 0; }
+.cc .ult-row label.tgt { display: inline-flex; align-items: center; font-size: 12px; color: var(--color-text-secondary); cursor: pointer; margin-left: 4px; }
 .cc .btn-sm { font-size: 12px; padding: 4px 10px; cursor: pointer; }
 .cc .btn-x { width: 26px; height: 26px; padding: 0; font-size: 14px; line-height: 1; cursor: pointer; flex-shrink: 0; }
 .cc .sect-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -87,3 +92,12 @@ input:focus { outline: none; box-shadow: 0 0 0 2px rgba(100,150,200,0.3); }
 .cc .lvl-row input[type=number] { width: 58px; height: 28px; font-size: 12px; }
 .cc .ult-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .cc .lbl-sm { font-size: 12px; color: var(--color-text-secondary); }
+
+@media (max-width: 520px) {
+  .cc .rg { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+  .cc .card { padding: 0.75rem 0.85rem; }
+  .cc input[type=number] { width: 100%; min-width: 0; box-sizing: border-box; }
+  .cc .skip-tbl { min-width: 340px; }
+  .cc .skip-tbl input[type=number] { width: 48px; }
+  .cc .lvl-row input[type=number] { width: 52px; }
+}

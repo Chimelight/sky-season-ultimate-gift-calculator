@@ -13,7 +13,7 @@ A static web calculator for planning the fastest graduation route in **Sky: Chil
 Open `index.html` directly in a browser, or use a simple local server:
 
 ```bash
-cd /Users/sympathy/Projects/sky-season-graduation-calculator
+cd sky-season-graduation-calculator
 python3 -m http.server 8080
 ```
 
@@ -23,3 +23,4 @@ Then open `http://localhost:8080`.
 
 - No build step is required.
 - State is in-memory only (refresh resets to defaults).
+

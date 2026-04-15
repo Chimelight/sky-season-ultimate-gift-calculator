@@ -1,5 +1,17 @@
 (function(){
 
+  const MAX_SPIRITS = 6;
+
+  let renderQueued = false;
+  function scheduleRender(){
+    if (renderQueued) return;
+    renderQueued = true;
+    requestAnimationFrame(() => {
+      renderQueued = false;
+      renderResult();
+    });
+  }
+
   function defaultState(){
     return {
       seasonName: 'Carnival',
@@ -11,7 +23,8 @@
         {name:'Puzzle director', levels:[[4],[19,7],[24,10],[28]]},
         {name:'Stunt actor',     levels:[[4],[19,7],[24,10],[28]]},
       ],
-      ultimates: [{hearts:2},{hearts:2}]
+      ultimates: [{hearts:2},{hearts:2}],
+      targetIdx: 1
     };
   }
 
@@ -55,7 +68,7 @@
         ]);
       }
     }
-    let strats = [{cost: state.rules.heart, days: 0, opts: []}];
+    let strats = [{cost: rules.heart, days: 0, opts: []}];
     for (let i=0; i<4; i++){
       const next = [];
       for (const s of strats) for (const o of lvlOpts[i]){
@@ -74,52 +87,59 @@
     return false;
   }
 
-  function greedyOrdering(picks, cumHearts, rules){
-    const idx = picks.map((p,i)=>({i, sc: p.strat.cost + rules.cpd * p.strat.days})).sort((a,b)=>a.sc-b.sc).map(o=>o.i);
+  // Find the k-subset of picks that minimizes max(ceil((sumC - pass)/cpd), sumD)
+  function bestFirstGroup(picks, k, rules){
+    const K = picks.length;
+    if (k <= 0) return {T: 0, idxs: []};
+    let totalC = 0, totalD = 0;
+    for (const p of picks){ totalC += p.strat.cost; totalD += p.strat.days; }
+    if (k >= K){
+      return {T: Math.max(Math.ceil((totalC - rules.pass)/rules.cpd), totalD), idxs: picks.map((_,i)=>i)};
+    }
+    let best = null;
+    const combo = [];
+    function rec(start, cnt, sc, sd){
+      if (cnt === k){
+        const T = Math.max(Math.ceil((sc - rules.pass)/rules.cpd), sd);
+        if (!best || T < best.T) best = {T, idxs: combo.slice()};
+        return;
+      }
+      if (K - start < k - cnt) return;
+      for (let i = start; i < K; i++){
+        combo.push(i);
+        rec(i+1, cnt+1, sc + picks[i].strat.cost, sd + picks[i].strat.days);
+        combo.pop();
+      }
+    }
+    rec(0, 0, 0, 0);
+    return best;
+  }
+
+  // Produce an ordering that minimizes T[targetIdx] as the primary metric.
+  // Other Ts are determined by greedy sort within/around the target group.
+  function orderingForTarget(picks, cumHearts, targetIdx, rules){
+    const K = picks.length;
+    if (K === 0) return {Ts: cumHearts.map(()=>0), order: []};
+    const score = i => picks[i].strat.cost + rules.cpd * picks[i].strat.days;
+    const targetCount = Math.min(cumHearts[targetIdx], K);
+    const fg = bestFirstGroup(picks, targetCount, rules);
+    const firstSet = new Set(fg.idxs);
+    const first = fg.idxs.slice().sort((a,b) => score(a) - score(b));
+    const rest = [];
+    for (let i = 0; i < K; i++) if (!firstSet.has(i)) rest.push(i);
+    rest.sort((a,b) => score(a) - score(b));
+    const order = first.concat(rest);
     const Ts = [];
-    let cumC=0, cumD=0, p=0;
+    let cumC = 0, cumD = 0, p = 0;
     for (const k of cumHearts){
-      while (p < k && p < picks.length){
-        cumC += picks[idx[p]].strat.cost;
-        cumD += picks[idx[p]].strat.days;
+      while (p < k && p < order.length){
+        cumC += picks[order[p]].strat.cost;
+        cumD += picks[order[p]].strat.days;
         p++;
       }
       Ts.push(Math.max(Math.ceil((cumC - rules.pass)/rules.cpd), cumD));
     }
-    return {Ts, order: idx};
-  }
-
-  function bestOrdering(picks, cumHearts, rules){
-    const K = picks.length;
-    if (K === 0) return {Ts: cumHearts.map(()=>0), order: []};
-    if (K > 8) return greedyOrdering(picks, cumHearts, rules);
-    let best = null;
-    const arr = picks.map((_,i)=>i);
-    function permute(start){
-      if (start === arr.length){
-        const Ts = [];
-        let cumC=0, cumD=0, p=0;
-        for (const k of cumHearts){
-          while (p < k){
-            cumC += picks[arr[p]].strat.cost;
-            cumD += picks[arr[p]].strat.days;
-            p++;
-          }
-          Ts.push(Math.max(Math.ceil((cumC - rules.pass)/rules.cpd), cumD));
-        }
-        if (!best || lexLessTs(Ts, best.Ts)){
-          best = {Ts: Ts, order: arr.slice()};
-        }
-        return;
-      }
-      for (let i = start; i < arr.length; i++){
-        [arr[start], arr[i]] = [arr[i], arr[start]];
-        permute(start+1);
-        [arr[start], arr[i]] = [arr[i], arr[start]];
-      }
-    }
-    permute(0);
-    return best;
+    return {Ts, order};
   }
 
   function solve(){
@@ -138,19 +158,57 @@
     let best = null;
     const picks = [];
 
+    const targetIdx = Math.max(0, Math.min(state.targetIdx || 0, state.ultimates.length - 1));
+    const targetCount = Math.min(cumHearts[targetIdx], K);
+
+    // For pruning: for each spirit, pick a single optimistic "good" strategy by score.
+    const bestByScore = perSpirit.map((arr) => {
+      let bestS = arr[0];
+      let bestScore = Infinity;
+      for (const s of arr){
+        const sc = s.cost + rules.cpd * s.days;
+        if (sc < bestScore){
+          bestScore = sc;
+          bestS = s;
+        }
+      }
+      return bestS;
+    });
+
+    function optimisticLowerBoundT(){
+      if (!best || targetCount <= 0) return 0;
+      const candidates = [];
+      for (const p of picks) candidates.push({strat: p.strat});
+      // Add at most one optimistic strategy per remaining spirit.
+      const usedSpirit = new Set(picks.map(p => p.spiritIdx));
+      for (let i = 0; i < N; i++){
+        if (usedSpirit.has(i)) continue;
+        candidates.push({strat: bestByScore[i]});
+      }
+      const k = Math.min(targetCount, candidates.length);
+      return bestFirstGroup(candidates, k, rules).T;
+    }
+
     function rec(i, used, cost, days){
       if (used > K) return;
       if (N - i + used < K) return;
-      const Tlower = Math.max(Math.ceil((cost - rules.pass)/rules.cpd), days);
-      if (best && Tlower > best.Tmax) return;
+      if (best && used >= targetCount){
+        // If we already have enough picks to potentially form the target group,
+        // see if even the best-case completion could beat current best.
+        const lb = optimisticLowerBoundT();
+        if (lb >= best.tScore) return;
+      }
 
       if (i === N){
         if (used !== K) return;
-        const Tmax = Math.max(Math.ceil((cost - rules.pass)/rules.cpd), days);
-        if (best && Tmax > best.Tmax) return;
-        const g = greedyOrdering(picks, cumHearts, rules);
-        if (!best || Tmax < best.Tmax || (Tmax === best.Tmax && lexLessTs(g.Ts, best.Ts))){
-          best = {Tmax, Ts: g.Ts, picks: picks.slice(), order: g.order};
+        const r = orderingForTarget(picks, cumHearts, targetIdx, rules);
+        const tScore = r.Ts[targetIdx];
+        const Tmax = r.Ts[r.Ts.length - 1];
+        if (!best ||
+            tScore < best.tScore ||
+            (tScore === best.tScore && Tmax < best.Tmax) ||
+            (tScore === best.tScore && Tmax === best.Tmax && lexLessTs(r.Ts, best.Ts))){
+          best = {tScore, Tmax, Ts: r.Ts, picks: picks.slice(), order: r.order};
         }
         return;
       }
@@ -168,12 +226,7 @@
 
     rec(0, 0, 0, 0);
     if (!best) return {error: 'No feasible plan found.'};
-
-    const refined = bestOrdering(best.picks, cumHearts, rules);
-    best.Ts = refined.Ts;
-    best.order = refined.order;
-
-    return {best, cumHearts};
+    return {best, cumHearts, targetIdx};
   }
 
   function addDays(s, n){ const [y,m,d]=s.split('-').map(Number); const dt=new Date(Date.UTC(y,m-1,d)); dt.setUTCDate(dt.getUTCDate()+n); return dt; }
@@ -209,24 +262,41 @@
           '<button class="btn-x" data-action="rm-spirit" data-idx="'+idx+'" title="Remove spirit">×</button>'+
         '</div>'+ lvlsHtml + '</div>';
     }).join('');
+
+    const countEl = document.getElementById('spirit-count');
+    if (countEl) countEl.textContent = '('+state.spirits.length+' / '+MAX_SPIRITS+')';
+
+    const addBtn = document.getElementById('add-spirit');
+    if (addBtn){
+      const atMax = state.spirits.length >= MAX_SPIRITS;
+      addBtn.disabled = atMax;
+      addBtn.style.opacity = atMax ? '0.4' : '1';
+      addBtn.style.cursor = atMax ? 'not-allowed' : 'pointer';
+      addBtn.title = atMax ? 'Capped at '+MAX_SPIRITS+' to keep computation fast' : '';
+    }
   }
 
   function renderUltimates(){
     const list = document.getElementById('ults-list');
+    if (state.targetIdx >= state.ultimates.length) state.targetIdx = state.ultimates.length - 1;
+    if (state.targetIdx < 0) state.targetIdx = 0;
     list.innerHTML = state.ultimates.map((u, idx) => {
+      const checked = idx === state.targetIdx ? ' checked' : '';
       return '<div class="ult-row">'+
         '<span style="min-width:90px;font-size:13px;">'+ordinal(idx+1)+' ultimate</span>'+
         '<span class="lbl-sm">+</span>'+
         '<input type="number" class="ult-h" data-idx="'+idx+'" value="'+u.hearts+'" min="0" style="width:60px;">'+
         '<span class="lbl-sm">season hearts</span>'+
+        '<label class="tgt"><input type="radio" name="tgt-ult" class="tgt-r" data-idx="'+idx+'"'+checked+'>prioritize</label>'+
         '<button class="btn-x" data-action="rm-ult" data-idx="'+idx+'" title="Remove">×</button>'+
         '</div>';
     }).join('');
     let acc = 0;
     const cumStr = state.ultimates.map(u => (acc += +u.hearts || 0)).join(', ');
     const totalNeed = acc;
-    document.getElementById('ult-summary').textContent = state.ultimates.length
-      ? 'Cumulative hearts needed at each ultimate: '+cumStr+'. Plan must complete '+totalNeed+' / '+state.spirits.length+' spirits.'
+    const tIdx = state.targetIdx;
+    document.getElementById('ult-summary').innerHTML = state.ultimates.length
+      ? 'Cumulative hearts at each ultimate: '+cumStr+'. Plan completes '+totalNeed+' / '+state.spirits.length+' spirits. Optimizing for: <b>'+ordinal(tIdx+1)+' ultimate</b> (earliest available).'
       : 'Add at least one ultimate gift.';
   }
 
@@ -238,22 +308,13 @@
     return '<span class="pill pb">Buy '+opt.buys.join('+')+'c</span><span class="pill ps">Skip '+opt.skips.join('+')+'c ('+opt.days+'d)</span>';
   }
 
-  function stageInfo(opt){
-    if (!opt || (opt.k === 'none' && opt.buys.length === 0 && opt.skips.length === 0)) return {kind:'buy', text:'(no items)'};
-    if (opt.k === 'buy') return {kind:'buy', text:'Buy '+opt.buys[0]+'c'};
-    if (opt.k === 'both') return {kind:'buy', text:'Buy '+opt.buys.join('+')+'c'};
-    if (opt.k === 'skip') return {kind:'skip', text:'Skip ('+opt.days+'d)'};
-    if (opt.k === 'skipboth') return {kind:'skip', text:'Skip both ('+opt.days+'d)'};
-    return {kind:'mixed', text:'Buy '+opt.buys[0]+'c | skip '+opt.skips[0]+'c ('+opt.days+'d)'};
-  }
-
   function renderSvg(best, completedMap){
     const usedIdxs = state.spirits.map((_,i)=>i).filter(i => completedMap.has(i));
     const Nu = usedIdxs.length;
     if (Nu === 0) return '';
-    const colWmin = 110;
+    const colWmin = 120;
     const w = Math.max(560, 100 + Nu * colWmin);
-    const rowH = 50, topPad = 24, leftPad = 88;
+    const rowH = 54, topPad = 24, leftPad = 88;
     const colW = (w - leftPad - 16) / Nu;
     const levels = ['Lv 5 heart','Lv 4','Lv 3','Lv 2','Lv 1'];
     const h = topPad + rowH * 5 + 16;
@@ -262,45 +323,67 @@
       const y = topPad + li*rowH + rowH/2 + 4;
       svg += '<text x="8" y="'+y+'" style="font-size:12px;fill:var(--color-text-secondary);">'+levels[li]+'</text>';
     }
+
+    function cell(x, y, w, h, kind, text, fs){
+      fs = fs || 11;
+      let fill, stroke, txt;
+      if (kind === 'buy') { fill='#EAF3DE'; stroke='#639922'; txt='#27500A'; }
+      else { fill='#FAEEDA'; stroke='#BA7517'; txt='#633806'; }
+      return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="5" fill="'+fill+'" stroke="'+stroke+'" stroke-opacity="0.5" stroke-width="0.8"/>'
+           + '<text x="'+(x+w/2)+'" y="'+(y+h/2+fs*0.36)+'" text-anchor="middle" style="font-size:'+fs+'px;fill:'+txt+';">'+escHtml(text)+'</text>';
+    }
+
     usedIdxs.forEach((spIdx, col) => {
       const sp = state.spirits[spIdx];
       const info = completedMap.get(spIdx);
       const xc = leftPad + colW*col + colW/2;
       svg += '<text x="'+xc+'" y="16" text-anchor="middle" style="font-size:12px;font-weight:500;fill:var(--color-text-primary);">'+escHtml(shortName(sp.name, spIdx))+'</text>';
       const opts = info.strat.opts;
-      const rows = [
-        {kind:'buy', text:'Heart '+state.rules.heart+'c'},
-        stageInfo(opts[3]),
-        stageInfo(opts[2]),
-        stageInfo(opts[1]),
-        stageInfo(opts[0]),
-      ];
       for (let li=0; li<5; li++){
-        const r = rows[li];
         const x = leftPad + colW*col + 6;
         const y = topPad + li*rowH + 6;
         const cw = colW - 12, ch = rowH - 12;
-        let fill, stroke, txt;
-        if (r.kind === 'buy'){ fill='#EAF3DE'; stroke='#639922'; txt='#27500A'; }
-        else if (r.kind === 'mixed'){ fill='#E6F1FB'; stroke='#378ADD'; txt='#0C447C'; }
-        else { fill='#FAEEDA'; stroke='#BA7517'; txt='#633806'; }
-        svg += '<rect x="'+x+'" y="'+y+'" width="'+cw+'" height="'+ch+'" rx="6" fill="'+fill+'" stroke="'+stroke+'" stroke-opacity="0.5" stroke-width="0.8"/>';
-        svg += '<text x="'+(x+cw/2)+'" y="'+(y+ch/2+4)+'" text-anchor="middle" style="font-size:11px;fill:'+txt+';">'+escHtml(r.text)+'</text>';
+
+        if (li === 0){
+          svg += cell(x, y, cw, ch, 'buy', 'Heart '+state.rules.heart+'c');
+          continue;
+        }
+
+        const opt = opts[4 - li];
+        if (!opt || (opt.buys.length === 0 && opt.skips.length === 0 && opt.k === 'none')){
+          continue;
+        }
+
+        if (opt.k === 'cheap' || opt.k === 'exp'){
+          const gap = 2;
+          const subH = (ch - gap) / 2;
+          svg += cell(x, y, cw, subH, 'buy', 'Buy '+opt.buys[0]+'c', 10);
+          svg += cell(x, y + subH + gap, cw, subH, 'skip', 'Skip '+opt.skips[0]+'c ('+opt.days+'d)', 10);
+        } else if (opt.k === 'buy'){
+          svg += cell(x, y, cw, ch, 'buy', 'Buy '+opt.buys[0]+'c');
+        } else if (opt.k === 'skip'){
+          svg += cell(x, y, cw, ch, 'skip', 'Skip ('+opt.days+'d)');
+        } else if (opt.k === 'both'){
+          svg += cell(x, y, cw, ch, 'buy', 'Buy '+opt.buys.join('+')+'c');
+        } else if (opt.k === 'skipboth'){
+          svg += cell(x, y, cw, ch, 'skip', 'Skip both ('+opt.days+'d)');
+        }
       }
     });
     svg += '</svg>';
     return svg;
   }
 
-  function genPost(best, cumHearts){
+  function genPost(best, cumHearts, targetIdx){
     const rules = state.rules;
     const totalCost = best.picks.reduce((s,p)=>s+p.strat.cost,0);
     const totalDays = best.picks.reduce((s,p)=>s+p.strat.days,0);
     const earned = rules.pass + rules.cpd * best.Tmax;
     let p = '🎁 ' + state.seasonName + ' — Fastest Graduation Route\n\n';
-    p += '**TL;DR**\n';
+    p += '**TL;DR** (optimizing for '+ordinal(targetIdx+1)+' ultimate earliest)\n';
     best.Ts.forEach((T, i) => {
-      p += '• ' + ordinal(i+1) + ' Ultimate (' + cumHearts[i] + ' season hearts): Day ' + T + ' (' + dayDate(state.startDate, T) + ')\n';
+      const mark = i === targetIdx ? ' ★' : '';
+      p += '• ' + ordinal(i+1) + ' Ultimate (' + cumHearts[i] + ' season hearts): Day ' + T + ' (' + dayDate(state.startDate, T) + ')' + mark + '\n';
     });
     p += '\n_Requires Season Pass (+'+rules.pass+' candle starter). '+state.spirits.length+' spirits available, '+cumHearts[cumHearts.length-1]+' hearts needed for full graduation._\n\n';
     p += '**Per-spirit strategy** (in completion order)\n';
@@ -393,7 +476,9 @@
     let html = '<div class="mg">';
     best.Ts.forEach((T, i) => {
       const date = dayDate(state.startDate, T);
-      html += '<div class="m"><div class="ml">'+ordinal(i+1)+' ultimate ('+cumHearts[i]+' hearts)</div><div class="mv">Day '+T+'</div><div class="ms">'+date+'</div></div>';
+      const isTarget = i === r.targetIdx;
+      const tgtPill = isTarget ? '<span class="target-badge">target</span>' : '';
+      html += '<div class="m"><div class="ml">'+ordinal(i+1)+' ultimate ('+cumHearts[i]+' hearts)'+tgtPill+'</div><div class="mv">Day '+T+'</div><div class="ms">'+date+'</div></div>';
     });
     html += '<div class="m"><div class="ml">Total candles spent</div><div class="mv">'+totalCost+'c</div><div class="ms">Earned by D'+best.Tmax+': '+earned+'c (surplus '+(earned-totalCost)+')</div></div>';
     html += '<div class="m"><div class="ml">Invite days used</div><div class="mv">'+totalDays+' / '+best.Tmax+'</div><div class="ms">1 invite per day</div></div>';
@@ -418,10 +503,10 @@
     html += '<div class="note">Plus Lv 5 heart ('+rules.heart+'c) per used spirit. Pill #N = completion order in the plan.</div>';
 
     html += '<h4>Tree map (bottom-up, used spirits only)</h4>';
-    html += '<div class="card" style="overflow-x:auto;">'+renderSvg(best, completedMap)+'<div class="legend"><span><span class="pill pb">■</span> buy only</span><span><span class="pill pw">■</span> buy + friendship-skip</span><span><span class="pill ps">■</span> full skip</span></div></div>';
+    html += '<div class="card" style="overflow-x:auto;">'+renderSvg(best, completedMap)+'<div class="legend"><span><span class="pill pb">■</span> buy</span><span><span class="pill ps">■</span> friendship-skip</span></div></div>';
 
     html += '<h4>Discord post (English)</h4>';
-    const post = genPost(best, cumHearts);
+    const post = genPost(best, cumHearts, r.targetIdx);
     html += '<div class="post-w"><button class="cpy btn-sm" id="cpy-btn">Copy</button><pre class="post">'+escHtml(post)+'</pre></div>';
 
     out.innerHTML = html;
@@ -432,16 +517,16 @@
     document.getElementById('s-name').addEventListener('input', e => {
       state.seasonName = e.target.value;
       document.getElementById('page-title').textContent = (state.seasonName || 'Season') + ' — graduation calculator';
-      renderResult();
+      scheduleRender();
     });
     document.getElementById('s-start').addEventListener('input', e => {
       state.startDate = e.target.value || '2026-04-17';
-      renderResult();
+      scheduleRender();
     });
     ['cpd','pass','heart','l1f','l1h','l2f','l2h','l3f','l3h','l4f','l4h'].forEach(k => {
       document.getElementById('r-'+k).addEventListener('input', e => {
         state.rules[k] = +e.target.value || 0;
-        renderResult();
+        scheduleRender();
       });
     });
     document.getElementById('reset-btn').addEventListener('click', () => {
@@ -449,20 +534,21 @@
       renderSeasonInputs();
       renderSpirits();
       renderUltimates();
-      renderResult();
+      scheduleRender();
     });
     document.getElementById('add-spirit').addEventListener('click', () => {
+      if (state.spirits.length >= MAX_SPIRITS) return;
       const tmpl = state.spirits[state.spirits.length-1];
       const newLevels = tmpl ? tmpl.levels.map(l => l.slice()) : [[4],[19,7],[24,10],[28]];
       state.spirits.push({name:'Spirit '+(state.spirits.length+1), levels: newLevels});
       renderSpirits();
       renderUltimates();
-      renderResult();
+      scheduleRender();
     });
     document.getElementById('add-ult').addEventListener('click', () => {
       state.ultimates.push({hearts:1});
       renderUltimates();
-      renderResult();
+      scheduleRender();
     });
 
     document.getElementById('spirits-list').addEventListener('input', e => {
@@ -470,7 +556,7 @@
       if (t.classList.contains('sp-name')){
         const idx = +t.dataset.spirit;
         state.spirits[idx].name = t.value;
-        renderResult();
+        scheduleRender();
       } else if (t.classList.contains('sp-cost')){
         const idx = +t.dataset.spirit, lvl = +t.dataset.lvl, pos = +t.dataset.pos;
         const v = t.value.trim();
@@ -482,7 +568,7 @@
           if (v === ''){ state.spirits[idx].levels[lvl] = cur.slice(0,1); }
           else { state.spirits[idx].levels[lvl] = [(cur[0] !== undefined ? cur[0] : 0), +v || 0]; }
         }
-        renderResult();
+        scheduleRender();
       }
     });
     document.getElementById('spirits-list').addEventListener('click', e => {
@@ -492,7 +578,7 @@
         state.spirits.splice(+t.dataset.idx, 1);
         renderSpirits();
         renderUltimates();
-        renderResult();
+        scheduleRender();
       }
     });
     document.getElementById('ults-list').addEventListener('input', e => {
@@ -501,8 +587,17 @@
         state.ultimates[+t.dataset.idx].hearts = Math.max(0, +t.value || 0);
         let acc=0;
         const cumStr = state.ultimates.map(u=>(acc+=+u.hearts||0)).join(', ');
-        document.getElementById('ult-summary').textContent = 'Cumulative hearts needed at each ultimate: '+cumStr+'. Plan must complete '+acc+' / '+state.spirits.length+' spirits.';
-        renderResult();
+        const tIdx = state.targetIdx;
+        document.getElementById('ult-summary').innerHTML = 'Cumulative hearts at each ultimate: '+cumStr+'. Plan completes '+acc+' / '+state.spirits.length+' spirits. Optimizing for: <b>'+ordinal(tIdx+1)+' ultimate</b> (earliest available).';
+        scheduleRender();
+      }
+    });
+    document.getElementById('ults-list').addEventListener('change', e => {
+      const t = e.target;
+      if (t.classList.contains('tgt-r') && t.checked){
+        state.targetIdx = +t.dataset.idx;
+        renderUltimates();
+        scheduleRender();
       }
     });
     document.getElementById('ults-list').addEventListener('click', e => {
@@ -511,7 +606,7 @@
         if (state.ultimates.length <= 1) return;
         state.ultimates.splice(+t.dataset.idx, 1);
         renderUltimates();
-        renderResult();
+        scheduleRender();
       }
     });
   }

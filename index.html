@@ -31,22 +31,24 @@
             <div class="rl"><label>Heart cost (Lv 5)</label><input type="number" id="r-heart"></div>
           </div>
           <div class="note" style="margin-bottom:4px;">Skip days per level. Half-skip is used when a level has 2 items and you buy one of them.</div>
-          <table class="t">
-            <thead><tr><th></th><th>Lv 1</th><th>Lv 2</th><th>Lv 3</th><th>Lv 4</th></tr></thead>
-            <tbody>
-              <tr><td>Full-skip days</td>
-                <td><input type="number" id="r-l1f"></td><td><input type="number" id="r-l2f"></td>
-                <td><input type="number" id="r-l3f"></td><td><input type="number" id="r-l4f"></td></tr>
-              <tr><td>Half-skip days</td>
-                <td><input type="number" id="r-l1h"></td><td><input type="number" id="r-l2h"></td>
-                <td><input type="number" id="r-l3h"></td><td><input type="number" id="r-l4h"></td></tr>
-            </tbody>
-          </table>
+          <div class="scroll-x">
+            <table class="t skip-tbl">
+              <thead><tr><th></th><th>Lv 1</th><th>Lv 2</th><th>Lv 3</th><th>Lv 4</th></tr></thead>
+              <tbody>
+                <tr><td>Full-skip days</td>
+                  <td><input type="number" id="r-l1f"></td><td><input type="number" id="r-l2f"></td>
+                  <td><input type="number" id="r-l3f"></td><td><input type="number" id="r-l4f"></td></tr>
+                <tr><td>Half-skip days</td>
+                  <td><input type="number" id="r-l1h"></td><td><input type="number" id="r-l2h"></td>
+                  <td><input type="number" id="r-l3h"></td><td><input type="number" id="r-l4h"></td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <div class="sect">
-        <div class="sect-head"><h3>Spirits</h3><button class="btn-sm" id="add-spirit">+ Add spirit</button></div>
+        <div class="sect-head"><h3>Spirits <span id="spirit-count" class="lbl-sm" style="font-weight:400;"></span></h3><button class="btn-sm" id="add-spirit">+ Add spirit</button></div>
         <div id="spirits-list" class="spirits-grid"></div>
         <div class="note">Each level: enter cost of the item(s). Leave the 2nd field blank for levels with only 1 item.</div>
       </div>
