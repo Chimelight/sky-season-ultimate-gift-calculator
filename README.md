@@ -2,6 +2,12 @@
 
 A static web calculator for planning the fastest graduation route in **Sky: Children of the Light** seasons.
 
+Live site: [chimelight.github.io/sky-season-graduation-calculator](https://chimelight.github.io/sky-season-graduation-calculator/)
+
+## Preview
+
+![Open Graph / social preview card](preview.png)
+
 ## Project Structure
 
 - `index.html`: page structure
