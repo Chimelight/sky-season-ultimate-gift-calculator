@@ -502,8 +502,8 @@
     best.Ts.forEach((T, i) => {
       const date = dayDate(state.startDate, T);
       const isTarget = i === r.targetIdx;
-      const tgtPill = isTarget ? '<span class="target-badge">target</span>' : '';
-      html += '<div class="m"><div class="ml">'+ordinal(i+1)+' ultimate ('+cumHearts[i]+' hearts)'+tgtPill+'</div><div class="mv">Day '+T+'</div><div class="ms">'+date+'</div></div>';
+      const tgtPill = isTarget ? '<span class="target-badge target-badge--corner">target</span>' : '';
+      html += '<div class="m">'+tgtPill+'<div class="ml">'+ordinal(i+1)+' ultimate ('+cumHearts[i]+' hearts)</div><div class="mv">Day '+T+'</div><div class="ms">'+date+'</div></div>';
     });
     html += '<div class="m"><div class="ml">Total candles spent</div><div class="mv">'+totalCost+'c</div><div class="ms">Earned by D'+best.Tmax+': '+earned+'c (surplus '+(earned-totalCost)+')</div></div>';
     html += '<div class="m"><div class="ml">Invite days used</div><div class="mv">'+totalDays+' / '+best.Tmax+'</div><div class="ms">1 invite per day</div></div>';
