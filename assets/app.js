@@ -79,10 +79,22 @@
     return strats.filter(s => !strats.some(x => x !== s && x.cost <= s.cost && x.days <= s.days && (x.cost < s.cost || x.days < s.days)));
   }
 
-  function lexLessTs(a, b){
+  // Build comparison priority order: target first, then later ultimates
+  // (closer to target first, fanning out), then earlier ones (closer first).
+  // Example for n=3: target=0 -> [0,1,2]; target=1 -> [1,2,0]; target=2 -> [2,1,0].
+  function priorityOrder(targetIdx, n){
+    const out = [targetIdx];
+    for (let i = targetIdx + 1; i < n; i++) out.push(i);
+    for (let i = targetIdx - 1; i >= 0; i--) out.push(i);
+    return out;
+  }
+
+  // Lex-compare two T arrays under a given priority order (a < b iff lex-smaller).
+  function lessByPriority(a, b, prio){
     if (!b) return true;
-    for (let i = a.length-1; i >= 0; i--){
-      if (a[i] !== b[i]) return a[i] < b[i];
+    for (const i of prio){
+      if (a[i] < b[i]) return true;
+      if (a[i] > b[i]) return false;
     }
     return false;
   }
@@ -115,20 +127,8 @@
     return best;
   }
 
-  // Produce an ordering that minimizes T[targetIdx] as the primary metric.
-  // Other Ts are determined by greedy sort within/around the target group.
-  function orderingForTarget(picks, cumHearts, targetIdx, rules){
-    const K = picks.length;
-    if (K === 0) return {Ts: cumHearts.map(()=>0), order: []};
-    const score = i => picks[i].strat.cost + rules.cpd * picks[i].strat.days;
-    const targetCount = Math.min(cumHearts[targetIdx], K);
-    const fg = bestFirstGroup(picks, targetCount, rules);
-    const firstSet = new Set(fg.idxs);
-    const first = fg.idxs.slice().sort((a,b) => score(a) - score(b));
-    const rest = [];
-    for (let i = 0; i < K; i++) if (!firstSet.has(i)) rest.push(i);
-    rest.sort((a,b) => score(a) - score(b));
-    const order = first.concat(rest);
+  // Compute Ts (one per ultimate) given a complete pick ordering.
+  function computeTs(picks, order, cumHearts, rules){
     const Ts = [];
     let cumC = 0, cumD = 0, p = 0;
     for (const k of cumHearts){
@@ -139,6 +139,66 @@
       }
       Ts.push(Math.max(Math.ceil((cumC - rules.pass)/rules.cpd), cumD));
     }
+    return Ts;
+  }
+
+  // Find the permutation of `arr` that, when slotted between `prefix` and `suffix`
+  // in the full ordering, produces the lex-smallest Ts under the given priority.
+  // Brute-force enumerates all permutations; arr.length ≤ MAX_SPIRITS so worst
+  // case is 6! = 720 — trivial.
+  function bestPermutation(arr, prefix, suffix, picks, cumHearts, rules, prio){
+    if (arr.length <= 1){
+      const order = prefix.concat(arr, suffix);
+      return {order: arr.slice(), Ts: computeTs(picks, order, cumHearts, rules)};
+    }
+    let bestArr = null, bestTs = null;
+    const a = arr.slice();
+    function perm(start){
+      if (start === a.length){
+        const order = prefix.concat(a, suffix);
+        const Ts = computeTs(picks, order, cumHearts, rules);
+        if (!bestTs || lessByPriority(Ts, bestTs, prio)){
+          bestArr = a.slice();
+          bestTs = Ts;
+        }
+        return;
+      }
+      for (let i = start; i < a.length; i++){
+        [a[start], a[i]] = [a[i], a[start]];
+        perm(start + 1);
+        [a[start], a[i]] = [a[i], a[start]];
+      }
+    }
+    perm(0);
+    return {order: bestArr, Ts: bestTs};
+  }
+
+  // Produce an ordering that minimizes T[targetIdx] as the primary metric,
+  // then secondary metrics in the priority order (target → later ults → earlier ults).
+  // Strategy:
+  //   1. Pick the optimal target-group subset (k spirits that minimize T[target]).
+  //   2. Permute the target group internally to optimize earlier sub-milestones
+  //      that fall before the target boundary (e.g. if target=2nd ult and group=2,
+  //      the 1st ult lands inside the group).
+  //   3. Permute the remaining spirits to optimize post-target ultimates.
+  function orderingForTarget(picks, cumHearts, targetIdx, rules){
+    const K = picks.length;
+    if (K === 0) return {Ts: cumHearts.map(()=>0), order: []};
+    const prio = priorityOrder(targetIdx, cumHearts.length);
+    const targetCount = Math.min(cumHearts[targetIdx], K);
+    const fg = bestFirstGroup(picks, targetCount, rules);
+    const firstSet = new Set(fg.idxs);
+    const firstArr = fg.idxs.slice();
+    const restArr = [];
+    for (let i = 0; i < K; i++) if (!firstSet.has(i)) restArr.push(i);
+
+    // Step 1: optimize the rest order (after target group), holding firstArr in any order
+    const restRes = bestPermutation(restArr, firstArr, [], picks, cumHearts, rules, prio);
+    const restOrder = restRes.order;
+    // Step 2: optimize the first-group order, with restOrder fixed
+    const firstRes = bestPermutation(firstArr, [], restOrder, picks, cumHearts, rules, prio);
+    const order = firstRes.order.concat(restOrder);
+    const Ts = computeTs(picks, order, cumHearts, rules);
     return {Ts, order};
   }
 
@@ -156,6 +216,7 @@
 
     const targetIdx = Math.max(0, Math.min(state.targetIdx || 0, state.ultimates.length - 1));
     const targetCount = Math.min(cumHearts[targetIdx], K);
+    const prio = priorityOrder(targetIdx, state.ultimates.length);
     const perSpirit = spirits.map(s => enumSpirit(s, rules));
     let best = null;
     const picks = [];
@@ -214,10 +275,12 @@
         const r = orderingForTarget(picks, cumHearts, targetIdx, rules);
         const tScore = r.Ts[targetIdx];
         const Tmax = r.Ts[r.Ts.length - 1];
+        // Tiebreaker: tScore first (== T[target]), then full priority-ordered lex.
+        // The priority order already starts with targetIdx, so when tScore is tied
+        // it falls through to compare T[target+1], T[target+2], ..., then T[target-1], ...
         if (!best ||
             tScore < best.tScore ||
-            (tScore === best.tScore && Tmax < best.Tmax) ||
-            (tScore === best.tScore && Tmax === best.Tmax && lexLessTs(r.Ts, best.Ts))){
+            (tScore === best.tScore && lessByPriority(r.Ts, best.Ts, prio))){
           best = {tScore, Tmax, Ts: r.Ts, picks: picks.slice(), order: r.order};
         }
         return;
@@ -502,8 +565,8 @@
     best.Ts.forEach((T, i) => {
       const date = dayDate(state.startDate, T);
       const isTarget = i === r.targetIdx;
-      const tgtPill = isTarget ? '<span class="target-badge target-badge--corner">target</span>' : '';
-      html += '<div class="m">'+tgtPill+'<div class="ml">'+ordinal(i+1)+' ultimate ('+cumHearts[i]+' hearts)</div><div class="mv">Day '+T+'</div><div class="ms">'+date+'</div></div>';
+      const tgtPill = isTarget ? '<span class="target-badge">target</span>' : '';
+      html += '<div class="m"><div class="ml">'+ordinal(i+1)+' ultimate ('+cumHearts[i]+' hearts)'+tgtPill+'</div><div class="mv">Day '+T+'</div><div class="ms">'+date+'</div></div>';
     });
     html += '<div class="m"><div class="ml">Total candles spent</div><div class="mv">'+totalCost+'c</div><div class="ms">Earned by D'+best.Tmax+': '+earned+'c (surplus '+(earned-totalCost)+')</div></div>';
     html += '<div class="m"><div class="ml">Invite days used</div><div class="mv">'+totalDays+' / '+best.Tmax+'</div><div class="ms">1 invite per day</div></div>';
