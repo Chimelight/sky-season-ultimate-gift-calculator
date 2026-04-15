@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sky — Season Graduation Calculator</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1 id="page-title">Season — graduation calculator</h1>
+    <div class="subtitle">Sky: Children of the Light · configure spirits, items per level, and ultimate gifts · auto-computes optimal route</div>
+
+    <div class="cc">
+
+      <div class="sect">
+        <div class="card">
+          <div class="rg">
+            <div class="rl"><label>Season name</label><input type="text" id="s-name"></div>
+            <div class="rl"><label>Season start (Day 1)</label><input type="date" id="s-start"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sect">
+        <div class="sect-head"><h3>Rules</h3><button class="btn-sm" id="reset-btn">Reset to Carnival defaults</button></div>
+        <div class="card">
+          <div class="rg" style="margin-bottom:12px;">
+            <div class="rl"><label>Candles / day</label><input type="number" id="r-cpd"></div>
+            <div class="rl"><label>Season pass bonus</label><input type="number" id="r-pass"></div>
+            <div class="rl"><label>Heart cost (Lv 5)</label><input type="number" id="r-heart"></div>
+          </div>
+          <div class="note" style="margin-bottom:4px;">Skip days per level. Half-skip is used when a level has 2 items and you buy one of them.</div>
+          <table class="t">
+            <thead><tr><th></th><th>Lv 1</th><th>Lv 2</th><th>Lv 3</th><th>Lv 4</th></tr></thead>
+            <tbody>
+              <tr><td>Full-skip days</td>
+                <td><input type="number" id="r-l1f"></td><td><input type="number" id="r-l2f"></td>
+                <td><input type="number" id="r-l3f"></td><td><input type="number" id="r-l4f"></td></tr>
+              <tr><td>Half-skip days</td>
+                <td><input type="number" id="r-l1h"></td><td><input type="number" id="r-l2h"></td>
+                <td><input type="number" id="r-l3h"></td><td><input type="number" id="r-l4h"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sect">
+        <div class="sect-head"><h3>Spirits</h3><button class="btn-sm" id="add-spirit">+ Add spirit</button></div>
+        <div id="spirits-list" class="spirits-grid"></div>
+        <div class="note">Each level: enter cost of the item(s). Leave the 2nd field blank for levels with only 1 item.</div>
+      </div>
+
+      <div class="sect">
+        <div class="sect-head"><h3>Ultimate gifts</h3><button class="btn-sm" id="add-ult">+ Add ultimate</button></div>
+        <div class="card">
+          <div id="ults-list"></div>
+          <div id="ult-summary" class="note" style="margin-top:8px;"></div>
+        </div>
+      </div>
+
+      <div class="sect">
+        <h3>Result</h3>
+        <div id="result-out" style="margin-top:10px;"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
