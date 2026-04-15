@@ -21,6 +21,6 @@ The app is a single-page static calculator with three files:
 
 **State model** (`app.js`): A single in-memory `state` object (season name, start date, rules, spirits array, ultimates array, target index). `defaultState()` returns Carnival-season defaults. All inputs write back to `state` via event listeners and then call `scheduleRender()`, which debounces via `requestAnimationFrame`.
 
-**Core algorithm** (`enumSpirit`): For each spirit, enumerates all possible buy/skip combinations across 4 levels and prunes Pareto-dominated strategies (cost vs. skip-days). The outer solver then combines per-spirit strategies to find the globally optimal plan given a candle budget and target graduation gift.
+**Core algorithm** (`enumSpirit`): For each spirit, enumerates all possible buy/skip combinations across 4 levels and prunes Pareto-dominated strategies (cost vs. skip-days). The outer solver then combines per-spirit strategies to find the globally optimal plan given a candle budget and target ultimate gift.
 
 **Rendering**: The result section renders a day-by-day schedule table plus a copyable post template. Spirit cards and ultimate rows are rendered imperatively into the DOM from state on every `renderResult()` call.

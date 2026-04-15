@@ -1,15 +1,15 @@
-# Sky Season Graduation Calculator
+# Sky Season Ultimate Gift Calculator
 
-A static web calculator for planning the fastest graduation route in **Sky: Children of the Light** seasons.
+A static web calculator for planning the fastest ultimate gift route in **Sky: Children of the Light** seasons.
 
-Live site: [chimelight.github.io/sky-season-graduation-calculator](https://chimelight.github.io/sky-season-graduation-calculator/)
+Live site: [chimelight.github.io/sky-season-ultimate-gift-calculator](https://chimelight.github.io/sky-season-ultimate-gift-calculator/)
 
 ## Preview
 
 <p align="center">
   <img
     src="./preview.png"
-    alt="Sky Season Graduation Calculator — social preview card"
+    alt="Sky Season Ultimate Gift Calculator — social preview card"
     width="800"
   />
 </p>
@@ -25,7 +25,7 @@ Live site: [chimelight.github.io/sky-season-graduation-calculator](https://chime
 Open `index.html` directly in a browser, or use a simple local server:
 
 ```bash
-cd sky-season-graduation-calculator
+cd sky-season-ultimate-gift-calculator
 python3 -m http.server 8080
 ```
 

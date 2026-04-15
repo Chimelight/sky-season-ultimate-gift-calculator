@@ -361,7 +361,7 @@
     ['l1f','l1h','l2f','l2h','l3f','l3h','l4f','l4h'].forEach(k => {
       document.getElementById('r-'+k).value = state.rules[k];
     });
-    document.getElementById('page-title').textContent = (state.seasonName || 'Season') + ' — graduation calculator';
+    document.getElementById('page-title').textContent = (state.seasonName || 'Season') + ' — ultimate gift calculator';
   }
 
   function renderSpirits(){
@@ -509,13 +509,13 @@
     const totalCost = best.picks.reduce((s,p)=>s+p.strat.cost,0);
     const totalDays = best.picks.reduce((s,p)=>s+p.strat.days,0);
     const earned = rules.pass + rules.cpd * best.Tmax;
-    let p = '🎁 ' + state.seasonName + ' — Fastest Graduation Route\n\n';
+    let p = '🎁 ' + state.seasonName + ' — Fastest Ultimate Gift Route\n\n';
     p += '**TL;DR** (optimizing for '+ordinal(targetIdx+1)+' ultimate earliest)\n';
     best.Ts.forEach((T, i) => {
       const mark = i === targetIdx ? ' ★' : '';
       p += '• ' + ordinal(i+1) + ' Ultimate (' + cumHearts[i] + ' season hearts): Day ' + T + ' (' + dayDate(state.startDate, T) + ')' + mark + '\n';
     });
-    p += '\n_Requires Season Pass (+'+rules.pass+' candle starter). '+state.spirits.length+' spirits available, '+cumHearts[cumHearts.length-1]+' hearts needed for full graduation._\n\n';
+    p += '\n_Requires Season Pass (+'+rules.pass+' candle starter). '+state.spirits.length+' spirits available, '+cumHearts[cumHearts.length-1]+' hearts needed for all ultimate gifts._\n\n';
     p += '**Per-spirit strategy** (in completion order)\n';
     best.order.forEach((pi, i) => {
       const pick = best.picks[pi];
@@ -646,7 +646,7 @@
   function bindStaticInputs(){
     document.getElementById('s-name').addEventListener('input', e => {
       state.seasonName = e.target.value;
-      document.getElementById('page-title').textContent = (state.seasonName || 'Season') + ' — graduation calculator';
+      document.getElementById('page-title').textContent = (state.seasonName || 'Season') + ' — ultimate gift calculator';
       scheduleRender();
     });
     document.getElementById('s-start').addEventListener('input', e => {
