@@ -43,14 +43,14 @@
       </div>
 
       <div class="sect">
-        <div class="sect-head"><h3 data-i18n="section_rules">Rules</h3><div style="display:flex;align-items:center;gap:6px;"><select id="season-picker" class="btn-sm" style="display:none;"></select><button class="btn-sm" id="reset-btn" data-i18n="btn_load_season">Load Season</button></div></div>
+        <div class="sect-head"><h3 data-i18n="section_rules">Rules</h3><div class="sect-head-actions"><select id="season-picker" class="btn-sm" style="display:none;"></select><button class="btn-sm" id="reset-btn" data-i18n="btn_load_season">Load Season</button></div></div>
         <div class="card">
-          <div class="rg" style="margin-bottom:12px;">
+          <div class="rg">
             <div class="rl"><label data-i18n="label_cpd">Candles / Day</label><input type="number" id="r-cpd"></div>
             <div class="rl"><label data-i18n="label_pass">Season Pass Bonus</label><input type="number" id="r-pass"></div>
             <div class="rl"><label data-i18n="label_heart">Heart Cost (Lv 5)</label><input type="number" id="r-heart"></div>
           </div>
-          <div class="note" style="margin-bottom:4px;" data-i18n="note_skip_days">Skip Days Per Level. Half-skip is used when a level has 2 items and you buy one of them.</div>
+          <div class="note" data-i18n="note_skip_days">Skip Days Per Level. Half-skip is used when a level has 2 items and you buy one of them.</div>
           <div class="scroll-x">
             <table class="t skip-tbl">
               <thead><tr><th></th><th data-i18n="th_lv1">Lv 1</th><th data-i18n="th_lv2">Lv 2</th><th data-i18n="th_lv3">Lv 3</th><th data-i18n="th_lv4">Lv 4</th></tr></thead>
@@ -68,7 +68,7 @@
       </div>
 
       <div class="sect">
-        <div class="sect-head"><h3><span data-i18n="section_spirits">Spirits</span> <span id="spirit-count" class="lbl-sm" style="font-weight:400;"></span></h3><button class="btn-sm" id="add-spirit" data-i18n="btn_add_spirit">+ Add Spirit</button></div>
+        <div class="sect-head"><h3><span data-i18n="section_spirits">Spirits</span> <span id="spirit-count" class="lbl-sm"></span></h3><button class="btn-sm" id="add-spirit" data-i18n="btn_add_spirit">+ Add Spirit</button></div>
         <div id="spirits-list" class="spirits-grid"></div>
         <div class="note" data-i18n="note_spirit_levels">Each Level: Enter cost of the item(s). Leave the 2nd field blank for levels with only 1 item.</div>
       </div>
@@ -77,13 +77,13 @@
         <div class="sect-head"><h3 data-i18n="section_ultimates">Ultimate Gifts</h3><button class="btn-sm" id="add-ult" data-i18n="btn_add_ult">+ Add Ultimate</button></div>
         <div class="card">
           <div id="ults-list"></div>
-          <div id="ult-summary" class="note" style="margin-top:8px;"></div>
+          <div id="ult-summary" class="note"></div>
         </div>
       </div>
 
       <div class="sect">
         <h3 data-i18n="section_result">Result</h3>
-        <div id="result-out" style="margin-top:10px;"></div>
+        <div id="result-out"></div>
       </div>
 
     </div>

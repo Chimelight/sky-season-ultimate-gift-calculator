@@ -349,8 +349,8 @@
                '<input type="number" class="sp-cost" data-spirit="'+idx+'" data-lvl="'+li+'" data-pos="1" value="'+c2+'" placeholder="'+escAttr(window.t('cost2_placeholder'))+'"></div>';
       }).join('');
       return '<div class="card spirit-card">'+
-        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">'+
-          '<input type="text" class="sp-name" data-spirit="'+idx+'" value="'+escAttr(sp.name)+'" style="flex:1;font-weight:500;min-width:0;">'+
+        '<div class="sp-card-header">'+
+          '<input type="text" class="sp-name" data-spirit="'+idx+'" value="'+escAttr(sp.name)+'">'+
           '<button class="btn-x" data-action="rm-spirit" data-idx="'+idx+'" title="'+escAttr(window.t('spirit_remove'))+'">×</button>'+
         '</div>'+ lvlsHtml + '</div>';
     }).join('');
@@ -362,8 +362,6 @@
     if (addBtn){
       const atMax = state.spirits.length >= MAX_SPIRITS;
       addBtn.disabled = atMax;
-      addBtn.style.opacity = atMax ? '0.4' : '1';
-      addBtn.style.cursor = atMax ? 'not-allowed' : 'pointer';
       addBtn.title = atMax ? window.t('spirit_capped', {max: MAX_SPIRITS}) : '';
     }
   }
@@ -375,9 +373,9 @@
     list.innerHTML = state.ultimates.map((u, idx) => {
       const checked = idx === state.targetIdx ? ' checked' : '';
       return '<div class="ult-row">'+
-        '<span style="min-width:90px;font-size:13px;">'+escHtml(window.t('ult_nth', {ord: window.ordinal(idx+1)}))+'</span>'+
+        '<span class="ult-nth-lbl">'+escHtml(window.t('ult_nth', {ord: window.ordinal(idx+1)}))+'</span>'+
         '<span class="lbl-sm">+</span>'+
-        '<input type="number" class="ult-h" data-idx="'+idx+'" value="'+u.hearts+'" min="0" style="width:60px;">'+
+        '<input type="number" class="ult-h ult-h-input" data-idx="'+idx+'" value="'+u.hearts+'" min="0">'+
         '<span class="lbl-sm">'+escHtml(window.t('ult_season_hearts'))+'</span>'+
         '<label class="tgt"><input type="radio" name="tgt-ult" class="tgt-r" data-idx="'+idx+'"'+checked+'>'+escHtml(window.t('ult_prioritize'))+'</label>'+
         '<button class="btn-x" data-action="rm-ult" data-idx="'+idx+'" title="'+escAttr(window.t('ult_remove'))+'">×</button>'+
@@ -417,12 +415,16 @@
     if (Nu === 0) return '';
     const colWmin = 120;
     const w = Math.max(560, 100 + Nu * colWmin);
-    const rowH = 54, topPad = 24, leftPad = 88;
-    const colW = (w - leftPad - 16) / Nu;
+    const rowH = 54, topPad = 24;
     const levels = [
       window.t('svg_lv5'), window.t('svg_lv4'), window.t('svg_lv3'),
       window.t('svg_lv2'), window.t('svg_lv1')
     ];
+    const _cvs = document.createElement('canvas');
+    const _ctx = _cvs.getContext('2d');
+    _ctx.font = '12px sans-serif';
+    const leftPad = Math.ceil(Math.max(...levels.map(l => _ctx.measureText(l).width))) + 16;
+    const colW = (w - leftPad - 16) / Nu;
     const h = topPad + rowH * 5 + 16;
     let svg = '<svg viewBox="0 0 '+w+' '+h+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;margin:8px 0;">';
     for (let li=0; li<5; li++){
@@ -586,9 +588,9 @@
   function renderResult(){
     const out = document.getElementById('result-out');
     let r;
-    try { r = solve(); } catch(e){ out.innerHTML = '<div class="card" style="border-color:var(--color-border-danger);"><div style="color:var(--color-text-danger);font-size:13px;">'+escHtml(window.t('err_solver'))+escHtml(e.message)+'</div></div>'; return; }
+    try { r = solve(); } catch(e){ out.innerHTML = '<div class="card card--danger"><div class="err-text">'+escHtml(window.t('err_solver'))+escHtml(e.message)+'</div></div>'; return; }
     if (r.error){
-      out.innerHTML = '<div class="card" style="border-color:var(--color-border-danger);"><div style="color:var(--color-text-danger);font-size:13px;">'+escHtml(r.error)+'</div></div>';
+      out.innerHTML = '<div class="card card--danger"><div class="err-text">'+escHtml(r.error)+'</div></div>';
       return;
     }
     const {best, cumHearts} = r;
@@ -618,12 +620,12 @@
     best.picks.forEach((p, pi) => completedMap.set(p.spiritIdx, {orderInPlan: best.order.indexOf(pi), strat: p.strat}));
 
     html += '<h4>'+escHtml(window.t('section_strategy'))+'</h4>';
-    html += '<div class="card" style="overflow-x:auto;"><table class="t"><thead><tr>'+
+    html += '<div class="card card--scroll"><table class="t"><thead><tr>'+
       '<th>'+escHtml(window.t('th_spirit'))+'</th>'+
-      '<th style="text-align: center;">'+escHtml(window.t('th_lv1'))+'</th>'+
-      '<th style="text-align: center;">'+escHtml(window.t('th_lv2'))+'</th>'+
-      '<th style="text-align: center;">'+escHtml(window.t('th_lv3'))+'</th>'+
-      '<th style="text-align: center;">'+escHtml(window.t('th_lv4'))+'</th>'+
+      '<th class="t-center">'+escHtml(window.t('th_lv1'))+'</th>'+
+      '<th class="t-center">'+escHtml(window.t('th_lv2'))+'</th>'+
+      '<th class="t-center">'+escHtml(window.t('th_lv3'))+'</th>'+
+      '<th class="t-center">'+escHtml(window.t('th_lv4'))+'</th>'+
       '<th>'+escHtml(window.t('th_cost'))+'</th>'+
       '<th>'+escHtml(window.t('th_days'))+'</th>'+
       '</tr></thead><tbody>';
@@ -640,12 +642,12 @@
     [...usedSpirits, ...unusedSpirits].forEach(({sp, idx}) => {
       const info = completedMap.get(idx);
       if (info){
-        html += '<tr><td style="font-weight:500;"><span class="pill pw">#'+(info.orderInPlan+1)+'</span> '+escHtml(sp.name)+'</td>';
-        for (let li=0; li<4; li++) html += '<td style="text-align: center;">'+strategyBadge(info.strat.opts[li])+'</td>';
+        html += '<tr><td class="td-name"><span class="pill pw">#'+(info.orderInPlan+1)+'</span> '+escHtml(sp.name)+'</td>';
+        for (let li=0; li<4; li++) html += '<td class="t-center">'+strategyBadge(info.strat.opts[li])+'</td>';
         html += '<td>'+info.strat.cost+'C</td><td>'+info.strat.days+'D</td></tr>';
       } else {
-        html += '<tr style="opacity:0.45;"><td>'+escHtml(sp.name)+'</td>'+
-                '<td colspan="4" style="font-style:italic;color:var(--color-text-secondary);">'+escHtml(window.t('not_used'))+'</td>'+
+        html += '<tr class="tr-unused"><td>'+escHtml(sp.name)+'</td>'+
+                '<td class="td-note" colspan="4">'+escHtml(window.t('not_used'))+'</td>'+
                 '<td>—</td><td>—</td></tr>';
       }
     });
@@ -653,7 +655,7 @@
     html += '<div class="note">'+escHtml(window.t('note_lv5', {heart: rules.heart}))+'</div>';
 
     html += '<h4>'+escHtml(window.t('section_treemap'))+'</h4>';
-    html += '<div class="card" style="overflow-x:auto;">'+renderSvg(best, completedMap)+
+    html += '<div class="card card--scroll">'+renderSvg(best, completedMap)+
             '<div class="legend">'+
             '<span><span class="pill pb">■</span> '+escHtml(window.t('legend_buy'))+'</span>'+
             '<span><span class="pill ps">■</span> '+escHtml(window.t('legend_skip'))+'</span>'+
