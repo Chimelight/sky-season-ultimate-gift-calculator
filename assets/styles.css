@@ -1,3 +1,4 @@
+/* ── Custom properties ──────────────────────────────────────── */
 :root {
   --color-background-primary: #ffffff;
   --color-background-secondary: #f5f4ef;
@@ -59,11 +60,36 @@
   --color-border-tertiary: rgba(255,255,255,0.15);
   --color-border-secondary: rgba(255,255,255,0.3);
 }
-body { font-family: var(--font-sans); background: var(--color-background-tertiary); color: var(--color-text-primary); margin: 0; padding: 24px 16px; line-height: 1.5; }
+
+/* ── Base ───────────────────────────────────────────────────── */
+body {
+  font-family: var(--font-sans);
+  background: var(--color-background-tertiary);
+  color: var(--color-text-primary);
+  margin: 0;
+  /* padding shrinks gracefully with viewport; body never collapses below 280px */
+  padding: clamp(12px, 3vw, 24px) clamp(10px, 3.5vw, 16px);
+  line-height: 1.5;
+  min-width: 280px;
+}
 .container { max-width: 980px; margin: 0 auto; }
-.page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
-.page-header-text { min-width: 0; flex: 1; }
-.header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ── Page header ────────────────────────────────────────────── */
+/* flex-wrap + margin-left:auto lets the actions row wrap under the title
+   naturally on narrow screens — no breakpoint needed */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+/* flex-basis:240px means: if title + actions can't both fit in one row,
+   title takes its own full-width row and actions wrap to the next row */
+.page-header-text { flex: 1 1 240px; min-width: 0; }
+.header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+/* ── Icon button ────────────────────────────────────────────── */
 .icon-btn {
   flex-shrink: 0;
   display: inline-flex;
@@ -86,6 +112,8 @@ body { font-family: var(--font-sans); background: var(--color-background-tertiar
 .icon-btn svg { display: block; }
 .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .icon-btn:disabled:hover { color: var(--color-text-secondary); background: var(--color-background-primary); border-color: var(--color-border-tertiary); }
+
+/* ── Language select ────────────────────────────────────────── */
 .lang-select {
   height: 40px;
   padding: 0 28px 0 10px;
@@ -105,46 +133,173 @@ body { font-family: var(--font-sans); background: var(--color-background-tertiar
 }
 .lang-select:hover { color: var(--color-text-primary); background-color: var(--color-background-secondary); border-color: var(--color-border-secondary); }
 .lang-select:focus { outline: none; box-shadow: 0 0 0 2px rgba(100,150,200,0.35); }
-h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
-.subtitle { font-size: 13px; color: var(--color-text-secondary); margin: 0; }
-button { background: transparent; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); color: var(--color-text-primary); padding: 6px 12px; cursor: pointer; font-family: inherit; }
+
+/* ── Typography ─────────────────────────────────────────────── */
+h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; word-break: break-word; overflow-wrap: break-word; }
+.subtitle { font-size: 13px; color: var(--color-text-secondary); margin: 0; word-break: break-word; overflow-wrap: break-word; }
+
+/* ── Base controls ──────────────────────────────────────────── */
+button {
+  background: transparent;
+  border: 0.5px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-md);
+  color: var(--color-text-primary);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
 button:hover { background: var(--color-background-secondary); }
 button:active { transform: scale(0.98); }
-input[type=number], input[type=date], input[type=text] { border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); font-family: inherit; }
+input[type=number], input[type=date], input[type=text] {
+  border: 0.5px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  font-family: inherit;
+}
 input:focus { outline: none; box-shadow: 0 0 0 2px rgba(100,150,200,0.3); }
+
+/* ── Calculator container ───────────────────────────────────── */
 .cc { font-size: 14px; line-height: 1.5; }
 .cc h3 { font-size: 16px; font-weight: 500; margin: 0; }
 .cc h4 { font-size: 14px; font-weight: 500; margin: 16px 0 8px; }
 .cc .sect { margin-bottom: 1.4rem; }
-.cc .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 0.9rem 1.1rem; }
+.cc .sect-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.cc .sect-head-actions { display: flex; align-items: center; gap: 6px; }
+
+/* ── Cards ──────────────────────────────────────────────────── */
+.cc .card {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  padding: 0.9rem 1.1rem;
+}
+/* card that needs horizontal scroll (strategy table, treemap) */
+.cc .card--scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* error card */
+.cc .card--danger { border-color: var(--color-border-danger); }
+.cc .err-text { color: var(--color-text-danger); font-size: 13px; }
+
+/* ── Tables ─────────────────────────────────────────────────── */
 .cc table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
-.cc table.t th, .cc table.t td { padding: 6px 6px; border-bottom: 0.5px solid var(--color-border-tertiary); text-align: left; vertical-align: middle; }
+.cc table.t th,
+.cc table.t td { padding: 6px; border-bottom: 0.5px solid var(--color-border-tertiary); text-align: left; vertical-align: middle; }
 .cc table.t th { font-weight: 500; color: var(--color-text-secondary); font-size: 12px; }
-.cc input[type=number] { width: 64px; height: 30px; padding: 0 6px; font-size: 13px; }
-.cc input[type=date], .cc input[type=text] { height: 30px; padding: 0 8px; font-size: 13px; }
-.cc .rg { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
-.cc .rl { display: flex; flex-direction: column; gap: 3px; }
-.cc .rl label { font-size: 11px; color: var(--color-text-secondary); }
-.cc .mg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.cc table.t .t-center { text-align: center; }
+.cc table.t .td-name { font-weight: 500; }
+.cc table.t .tr-unused { opacity: 0.45; }
+.cc table.t .tr-unused .td-note { font-style: italic; color: var(--color-text-secondary); }
+
+/* ── Inputs ─────────────────────────────────────────────────── */
+/* All .cc inputs fill their container by default; containers use
+   padding/gap to control visual spacing rather than fixed widths */
+.cc input[type=number],
+.cc input[type=date],
+.cc input[type=text] { width: 100%; height: 30px; padding: 0 8px; font-size: 13px; box-sizing: border-box; }
+.cc input[type=number] { padding: 0 6px; }
+.cc input[type=radio] { margin: 0 4px 0 0; width: auto; }
+/* Disabled button state via CSS — no JS style needed */
+.cc .btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Grids (all intrinsic — no breakpoints) ─────────────────── */
+
+/* Metrics: 4 tiles on wide, fewer on narrow — auto-fit handles it */
+.cc .mg {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
 .cc .m { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 14px; position: relative; }
 .cc .ml { font-size: 12px; color: var(--color-text-secondary); }
 .cc .mv { font-size: 22px; font-weight: 500; margin-top: 2px; }
 .cc .ms { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
-.cc .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; margin-right: 4px; }
+
+/* Rules grid */
+.cc .rg {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+.cc .rl { display: flex; flex-direction: column; gap: 3px; }
+.cc .rl label { font-size: 11px; color: var(--color-text-secondary); }
+/* inputs inherit width:100% from the base rule and fill their grid cells */
+
+/* Spirits grid */
+.cc .spirits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.cc .spirit-card { padding: 10px 12px; }
+/* Spirit card name row */
+.cc .sp-card-header { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.cc .sp-name { flex: 1; font-weight: 500; min-width: 0; }
+
+/* ── Level rows (inside spirit cards) ───────────────────────── */
+.cc .lvl-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+/* min-width:max-content lets label be exactly as wide as its text in any language */
+.cc .lvl-label { min-width: max-content; color: var(--color-text-secondary); font-size: 11px; white-space: nowrap; }
+.cc .lvl-row input[type=number] { flex: 1; min-width: 0; height: 28px; font-size: 12px; }
+
+/* ── Ultimate gift rows ─────────────────────────────────────── */
+/* The ults-list is a shared grid; each .ult-row uses display:contents
+   so its 6 children become direct grid items — all rows share the same
+   column widths, keeping "+" and the hearts input aligned across rows */
+#ults-list {
+  display: grid;
+  grid-template-columns: max-content max-content 6ch max-content 1fr max-content;
+  align-items: center;
+  row-gap: 6px;
+  column-gap: 6px;
+}
+.cc .ult-row { display: contents; }
+.cc .ult-nth-lbl { font-size: 13px; white-space: nowrap; }
+/* hearts input fills its 6ch column */
+.cc .ult-h-input { width: 100%; }
+.cc .ult-row label.tgt { display: inline-flex; align-items: center; font-size: 12px; color: var(--color-text-secondary); cursor: pointer; }
+
+/* ── Skip days table ────────────────────────────────────────── */
+.cc .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* inputs inherit width:100% and fill their table cells */
+
+/* ── Pills / badges ─────────────────────────────────────────── */
+.cc .pill {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-right: 4px;
+  /* prevent long pill text from overflowing table cells */
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
 .cc .pb { background: var(--color-background-success); color: var(--color-text-success); }
 .cc .ps { background: var(--color-background-warning); color: var(--color-text-warning); }
 .cc .pw { background: var(--color-background-info); color: var(--color-text-info); }
-.cc .post-w { position: relative; }
-.cc .cpy { position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 10px; cursor: pointer; }
-.cc pre.post { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px; padding-right: 78px; font-family: var(--font-mono); font-size: 12px; white-space: pre-wrap; max-height: 480px; overflow-y: auto; margin: 0; line-height: 1.55; }
-.cc .note { font-size: 12px; color: var(--color-text-secondary); margin-top: 6px; }
-.cc .legend { display: flex; gap: 12px; margin-top: 6px; font-size: 11px; color: var(--color-text-secondary); flex-wrap: wrap; }
-.cc .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.cc .skip-tbl input[type=number] { width: 52px; }
-.cc .target-badge { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 999px; background: var(--color-background-info); color: var(--color-text-info); margin-left: 6px; font-weight: 500; }
-.cc .target-badge--corner { position: absolute; right: 10px; bottom: 10px; margin-left: 0; white-space: nowrap; }
-.cc input[type=radio] { margin: 0 4px 0 0; }
-.cc .ult-row label.tgt { display: inline-flex; align-items: center; font-size: 12px; color: var(--color-text-secondary); cursor: pointer; margin-left: 4px; }
+.cc .target-badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--color-background-info);
+  color: var(--color-text-info);
+  margin-left: 6px;
+  font-weight: 500;
+}
+
+/* ── Buttons (component-level) ──────────────────────────────── */
 .cc .btn-sm { font-size: 12px; padding: 4px 10px; cursor: pointer; }
 .cc select.btn-sm {
   appearance: none;
@@ -163,28 +318,36 @@ input:focus { outline: none; box-shadow: 0 0 0 2px rgba(100,150,200,0.3); }
 .cc select.btn-sm:hover { background-color: var(--color-background-secondary); }
 .cc select.btn-sm:focus { outline: none; box-shadow: 0 0 0 2px rgba(100,150,200,0.3); }
 .cc .btn-x { width: 26px; height: 26px; padding: 0; font-size: 14px; line-height: 1; cursor: pointer; flex-shrink: 0; }
-.cc .sect-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.cc .spirits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
-.cc .spirit-card { padding: 10px 12px; }
-.cc .lvl-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
-.cc .lvl-label { min-width: 30px; color: var(--color-text-secondary); font-size: 11px; }
-.cc .lvl-row input[type=number] { flex: 1; min-width: 0; height: 28px; font-size: 12px; }
-.cc .ult-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-.cc .lbl-sm { font-size: 12px; color: var(--color-text-secondary); }
 
-@media (max-width: 520px) {
-  .cc .mg { grid-template-columns: 1fr; }
-  .cc .rg { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
-  .cc .card { padding: 0.75rem 0.85rem; }
-  .cc input[type=number] { width: 100%; min-width: 0; box-sizing: border-box; }
-  .cc .skip-tbl { min-width: 340px; }
-  .cc .skip-tbl input[type=number] { width: 48px; }
+/* ── Text helpers ───────────────────────────────────────────── */
+.cc .lbl-sm { font-size: 12px; color: var(--color-text-secondary); font-weight: 400; }
+.cc .note { font-size: 12px; color: var(--color-text-secondary); margin-top: 6px; }
+.cc .legend { display: flex; gap: 12px; margin-top: 6px; font-size: 11px; color: var(--color-text-secondary); flex-wrap: wrap; }
+
+/* ── Discord post output ────────────────────────────────────── */
+.cc .post-w { position: relative; }
+.cc .cpy { position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 10px; cursor: pointer; }
+.cc pre.post {
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+  /* right padding reserves space for the copy button */
+  padding: 14px 78px 14px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: pre-wrap;
+  max-height: 480px;
+  overflow-y: auto;
+  overflow-x: auto;
+  margin: 0;
+  line-height: 1.55;
+  word-break: break-all;
 }
 
-@media (max-width: 980px) {
-  .cc .mg { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-
-@media (max-width: 760px) {
-  .cc .mg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
+/* ── Specific element spacing ───────────────────────────────── */
+#result-out { margin-top: 10px; }
+#ult-summary { margin-top: 8px; }
+/* Rules card: gap between the 3-input grid and the skip-days note.
+   :not(:last-child) avoids adding margin in cards where .rg is the only child */
+.cc .card > .rg:not(:last-child) { margin-bottom: 12px; }
+/* Skip-days note sits close to the table below it */
+.cc .rg + .note { margin-bottom: 4px; }
