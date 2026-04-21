@@ -27,7 +27,7 @@ export function SpiritsSection() {
         <Button
           variant="outline"
           size="sm"
-          className="h-7 text-xs gap-1"
+          className="h-8 text-xs gap-1"
           disabled={atMax}
           title={atMax ? t('spirit_capped', { max: maxSpirits }) : ''}
           onClick={handleAdd}

@@ -22,7 +22,7 @@ export function RulesCard() {
 
   return (
     <Card className="[container-type:inline-size]">
-      <CardHeader className="pb-3">
+      <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-base">{t('section_rules')}</CardTitle>
           {SEASONS.length > 1 && (

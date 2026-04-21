@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useMemo } from 'react'
 import { useTheme } from 'next-themes'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -87,7 +87,7 @@ function renderSvg(
         svg += cell(x, y, subW, ch, 'buy', labels.buyLine(opt.buys[0]), 9)
         svg += cell(x + subW + gap, y, subW, ch, 'skip', labels.skipLine(opt.skips[0], opt.days), 9)
       } else if (opt.k === 'buy') {
-        svg += cell(x, y, cw, ch, 'buy', `Buy ${opt.buys[0]}C`)
+        svg += cell(x, y, cw, ch, 'buy', labels.buyLine(opt.buys[0]))
       } else if (opt.k === 'skip') {
         svg += cell(x, y, cw, ch, 'skip', labels.skipDays(opt.days))
       } else if (opt.k === 'both') {
@@ -109,8 +109,9 @@ export function TreeMap({ result }: { result: SolveResult }) {
   const { best } = result
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const completedMap = new Map(
-    best.picks.map((p, pi) => [p.spiritIdx, { orderInPlan: best.order.indexOf(pi), strat: p.strat }])
+  const completedMap = useMemo(
+    () => new Map(best.picks.map((p, pi) => [p.spiritIdx, { orderInPlan: best.order.indexOf(pi), strat: p.strat }])),
+    [best]
   )
 
   useEffect(() => {
@@ -133,7 +134,7 @@ export function TreeMap({ result }: { result: SolveResult }) {
       isDark
     )
     containerRef.current.innerHTML = svg
-  })
+  }, [best, completedMap, state.spirits, state.rules, resolvedTheme, t])
 
   return (
     <div className="space-y-2">
@@ -142,7 +143,7 @@ export function TreeMap({ result }: { result: SolveResult }) {
         <CardContent className="pt-4 pb-4 space-y-3">
           <div className="relative">
             <div ref={containerRef} className="overflow-x-auto" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-card to-transparent sm:hidden" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-card to-transparent @[32rem]:hidden" />
           </div>
           <div className="flex gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">

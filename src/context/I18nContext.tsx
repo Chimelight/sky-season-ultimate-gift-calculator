@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import { t as tFn, getOrdinal, formatDate as fmtDate, getSavedLang, LANGS } from '@/i18n'
 
 interface I18nContextValue {
@@ -14,6 +14,10 @@ const I18nContext = createContext<I18nContextValue | null>(null)
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState(getSavedLang)
+
+  useEffect(() => {
+    document.documentElement.lang = lang
+  }, [lang])
 
   const setLang = useCallback((code: string) => {
     setLangState(code)

@@ -16,7 +16,7 @@ export function Header() {
     <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-sm">
       <div className="mx-auto w-full max-w-[min(64rem,100%-2rem)] px-[clamp(0.75rem,2vw,1.5rem)] py-3 flex items-start justify-between flex-wrap gap-x-2 gap-y-2 [container-type:inline-size]">
         <div className="min-w-0 flex-1 [flex-basis:12ch]">
-          <h1 className="text-lg font-semibold leading-tight tracking-tight wrap-anywhere line-clamp-2">{title}</h1>
+          <h1 className="text-lg font-semibold leading-tight tracking-tight wrap-anywhere break-words">{title}</h1>
           <p className="text-xs text-muted-foreground mt-0.5 hidden @[28rem]:block">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0 flex-wrap">

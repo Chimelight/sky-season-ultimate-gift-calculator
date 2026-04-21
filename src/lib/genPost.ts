@@ -1,6 +1,6 @@
 import type { Spirit, Rules } from '@/data/seasons'
 import type { Pick } from './solver'
-import { addDays } from './helpers'
+import { addDays, describeOpt } from './helpers'
 import { formatDate, getOrdinal } from '@/i18n'
 
 interface GenPostArgs {
@@ -17,20 +17,6 @@ interface GenPostArgs {
 
 function dayDate(startDate: string, n: number, lang: string): string {
   try { return formatDate(addDays(startDate, n - 1), lang) } catch { return '?' }
-}
-
-function describeOpt(
-  o: Pick['strat']['opts'][number] | undefined,
-  t: (key: string, vars?: Record<string, string | number>) => string
-): string | null {
-  if (!o || o.k === 'none') return null
-  if (o.k === 'buy') return t('desc_buy', { c: o.buys[0] })
-  if (o.k === 'both') return t('desc_buy_both', { exp: o.buys[0], cheap: o.buys[1] })
-  if (o.k === 'cheap') return t('desc_buy_cheap', { cheap: o.buys[0], exp: o.skips[0], d: o.days })
-  if (o.k === 'exp') return t('desc_buy_exp', { exp: o.buys[0], cheap: o.skips[0], d: o.days })
-  if (o.k === 'skip') return t('desc_skip', { c: o.skips[0], d: o.days })
-  if (o.k === 'skipboth') return t('desc_skip_both', { d: o.days })
-  return null
 }
 
 export function genPost({ seasonName, startDate, rules, spirits, best, cumHearts, targetIdx, lang, t }: GenPostArgs): string {

@@ -1,4 +1,3 @@
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useI18n } from '@/context/I18nContext'
 import { useAppState } from '@/context/StateContext'
