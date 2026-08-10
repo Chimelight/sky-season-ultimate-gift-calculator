@@ -28,11 +28,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
-      # No npm cache and no `npm ci`: package-lock.json is gitignored by this
-      # project, and both of those require a lockfile in the repo. This is the
-      # install command CLAUDE.md documents.
-      - run: npm install --legacy-peer-deps
+      # `npm ci` installs exactly the lockfile, so a deploy cannot pick up a
+      # dependency version that was never tested here. --legacy-peer-deps
+      # matches the install command CLAUDE.md documents.
+      - run: npm ci --legacy-peer-deps
 
       - run: npm run build
 
