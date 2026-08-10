@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { useI18n } from '@/context/I18nContext'
-import { useAppState } from '@/context/StateContext'
+import type { Rules, Spirit } from '@/data/seasons'
 import type { SolveResult, LevelOpt } from '@/lib/solver'
 
 function StratBadge({ opt }: { opt: LevelOpt | undefined }) {
@@ -26,21 +26,20 @@ function StratBadge({ opt }: { opt: LevelOpt | undefined }) {
   )
 }
 
-export function StrategyTable({ result }: { result: SolveResult }) {
+export function StrategyTable({ result, spirits, rules }: { result: SolveResult; spirits: Spirit[]; rules: Rules }) {
   const { t } = useI18n()
-  const { state } = useAppState()
   const { best } = result
 
   const completedMap = new Map(
     best.picks.map((p, pi) => [p.spiritIdx, { orderInPlan: best.order.indexOf(pi), strat: p.strat }])
   )
 
-  const usedSpirits = state.spirits
+  const usedSpirits = spirits
     .map((sp, idx) => ({ sp, idx, info: completedMap.get(idx) }))
     .filter(x => x.info)
     .sort((a, b) => a.info!.orderInPlan - b.info!.orderInPlan)
 
-  const unusedSpirits = state.spirits
+  const unusedSpirits = spirits
     .map((sp, idx) => ({ sp, idx }))
     .filter(({ idx }) => !completedMap.has(idx))
 
@@ -90,7 +89,7 @@ export function StrategyTable({ result }: { result: SolveResult }) {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-muted-foreground">{t('note_lv5', { heart: state.rules.heart })}</p>
+      <p className="text-xs text-muted-foreground">{t('note_lv5', { heart: rules.heart })}</p>
     </div>
   )
 }

@@ -3,8 +3,8 @@ import { useTheme } from 'next-themes'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useI18n } from '@/context/I18nContext'
-import { useAppState } from '@/context/StateContext'
 import { shortName } from '@/lib/helpers'
+import type { Rules, Spirit } from '@/data/seasons'
 import type { SolveResult, Pick } from '@/lib/solver'
 
 function renderSvg(
@@ -108,9 +108,8 @@ function renderSvg(
   return svg
 }
 
-export function TreeMap({ result }: { result: SolveResult }) {
+export function TreeMap({ result, spirits, rules }: { result: SolveResult; spirits: Spirit[]; rules: Rules }) {
   const { t } = useI18n()
-  const { state } = useAppState()
   const { resolvedTheme } = useTheme()
   const { best } = result
   const containerRef = useRef<HTMLDivElement>(null)
@@ -126,8 +125,8 @@ export function TreeMap({ result }: { result: SolveResult }) {
     const svg = renderSvg(
       best,
       completedMap,
-      state.spirits,
-      state.rules,
+      spirits,
+      rules,
       {
         lv5: t('svg_lv5'), lv4: t('svg_lv4'), lv3: t('svg_lv3'), lv2: t('svg_lv2'), lv1: t('svg_lv1'),
         heart: (c) => t('svg_heart', { c }),
@@ -137,7 +136,7 @@ export function TreeMap({ result }: { result: SolveResult }) {
       isDark
     )
     containerRef.current.innerHTML = svg
-  }, [best, completedMap, state.spirits, state.rules, resolvedTheme, t])
+  }, [best, completedMap, spirits, rules, resolvedTheme, t])
 
   return (
     <div className="space-y-2">

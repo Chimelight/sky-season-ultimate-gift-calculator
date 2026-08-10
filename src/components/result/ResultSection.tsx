@@ -12,10 +12,10 @@ export function ResultSection() {
   const { t } = useI18n()
   const { state } = useAppState()
   const { spirits, ultimates, rules, targetIdx } = state
-  const { outcome, pending } = useSolve({ spirits, ultimates, rules, targetIdx })
+  const { outcome, input, pending } = useSolve({ spirits, ultimates, rules, targetIdx })
 
   // Nothing computed yet — the very first solve, before any result exists.
-  if (!outcome) {
+  if (!outcome || !input) {
     return <p className="text-sm text-muted-foreground">{t('solving')}</p>
   }
 
@@ -38,11 +38,15 @@ export function ResultSection() {
       }`}
       aria-busy={pending}
     >
-      <MetricsSummary result={outcome} />
-      <StrategyTable result={outcome} />
-      <TreeMap result={outcome} />
-      <DailyTable result={outcome} />
-      <DiscordPost result={outcome} />
+      {/* Children read spirits and rules from the snapshot the result was
+          computed against, never from live state. A worker reply arrives after
+          the state may already have moved on — switching seasons mid-solve used
+          to index a 5-spirit result into a 4-spirit list and blank the page. */}
+      <MetricsSummary result={outcome} rules={input.rules} />
+      <StrategyTable result={outcome} spirits={input.spirits} rules={input.rules} />
+      <TreeMap result={outcome} spirits={input.spirits} rules={input.rules} />
+      <DailyTable result={outcome} spirits={input.spirits} rules={input.rules} />
+      <DiscordPost result={outcome} spirits={input.spirits} rules={input.rules} />
     </div>
   )
 }

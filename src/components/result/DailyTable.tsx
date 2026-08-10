@@ -5,6 +5,7 @@ import { useAppState } from '@/context/StateContext'
 import { addDays } from '@/lib/helpers'
 import { buildSchedule, formatFriendship } from '@/lib/schedule'
 import type { Step } from '@/lib/schedule'
+import type { Rules, Spirit } from '@/data/seasons'
 import type { SolveResult } from '@/lib/solver'
 
 // Numbers are coloured by flow direction, which is a different axis from the
@@ -14,11 +15,11 @@ import type { SolveResult } from '@/lib/solver'
 const GAIN = 'text-green-700 dark:text-green-400'
 const SPEND = 'text-rose-700 dark:text-rose-400'
 
-export function DailyTable({ result }: { result: SolveResult }) {
+export function DailyTable({ result, spirits, rules }: { result: SolveResult; spirits: Spirit[]; rules: Rules }) {
   const { t, ordinal, formatDate } = useI18n()
   const { state } = useAppState()
 
-  const rows = useMemo(() => buildSchedule(result, state.rules), [result, state.rules])
+  const rows = useMemo(() => buildSchedule(result, rules), [result, rules])
 
   // Which season day is today. A returning player opens this table to find
   // exactly one thing — where am I now — so mark it rather than making them
@@ -34,7 +35,7 @@ export function DailyTable({ result }: { result: SolveResult }) {
   function dayDate(n: number) {
     try { return formatDate(addDays(state.startDate, n - 1)) } catch { return '—' }
   }
-  const spiritName = (i: number) => state.spirits[i]?.name || t('spirit_name_default', { n: i + 1 })
+  const spiritName = (i: number) => spirits[i]?.name || t('spirit_name_default', { n: i + 1 })
 
   function eventBadge(s: Step) {
     if (s.kind === 'collect') return <Badge variant="secondary">{t('step_collect')}</Badge>
@@ -131,8 +132,8 @@ export function DailyTable({ result }: { result: SolveResult }) {
                       </td>
                       <td className="py-1 pl-2">
                         <div className="flex flex-wrap gap-1">
-                          {s.kind === 'collect' && r.day === 1 && state.rules.pass > 0 && (
-                            <Badge variant="secondary">{t('badge_pass', { pass: state.rules.pass })}</Badge>
+                          {s.kind === 'collect' && r.day === 1 && rules.pass > 0 && (
+                            <Badge variant="secondary">{t('badge_pass', { pass: rules.pass })}</Badge>
                           )}
                           {s.cleared.map(lv => (
                             <Badge key={`cl${lv}`} variant="order">{t('step_cleared', { lv })}</Badge>

@@ -3,16 +3,17 @@ import { Badge } from '@/components/ui/badge'
 import { useI18n } from '@/context/I18nContext'
 import { useAppState } from '@/context/StateContext'
 import { addDays } from '@/lib/helpers'
+import type { Rules } from '@/data/seasons'
 import type { SolveResult } from '@/lib/solver'
 
-export function MetricsSummary({ result }: { result: SolveResult }) {
+export function MetricsSummary({ result, rules }: { result: SolveResult; rules: Rules }) {
   const { t, ordinal, formatDate } = useI18n()
   const { state } = useAppState()
   const { best, cumHearts, targetIdx } = result
 
   const totalCost = best.picks.reduce((s, p) => s + p.strat.cost, 0)
   const totalDays = best.picks.reduce((s, p) => s + p.strat.days, 0)
-  const earned = state.rules.pass + state.rules.cpd * best.Tmax
+  const earned = rules.pass + rules.cpd * best.Tmax
 
   function dayDate(n: number) {
     try { return formatDate(addDays(state.startDate, n - 1)) } catch { return '?' }

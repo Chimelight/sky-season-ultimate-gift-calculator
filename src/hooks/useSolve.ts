@@ -5,7 +5,7 @@ import type { SolveRequest } from '@/lib/solver.worker'
 
 type Outcome = SolveResult | SolveError
 
-interface Args {
+export interface SolveInput {
   spirits: Spirit[]
   ultimates: Ultimate[]
   rules: Rules
@@ -22,14 +22,18 @@ interface Args {
  * mode. Off-thread it costs nothing visible, and superseded requests are
  * dropped by id so a burst of typing only ever paints the newest result.
  */
-export function useSolve({ spirits, ultimates, rules, targetIdx }: Args): {
+export function useSolve({ spirits, ultimates, rules, targetIdx }: SolveInput): {
   outcome: Outcome | null
+  /** The inputs `outcome` was computed from — never today's state. */
+  input: SolveInput | null
   pending: boolean
 } {
-  const [outcome, setOutcome] = useState<Outcome | null>(null)
+  const [solved, setSolved] = useState<{ outcome: Outcome; input: SolveInput } | null>(null)
   const [pending, setPending] = useState(true)
   const workerRef = useRef<Worker | null>(null)
   const latestId = useRef(0)
+  /** Inputs by request id, so a reply is paired with what produced it. */
+  const inflight = useRef<Record<number, SolveInput>>({})
 
   useEffect(() => {
     // No worker (older browser, or a test runner) — fall back to solving inline.
@@ -38,7 +42,8 @@ export function useSolve({ spirits, ultimates, rules, targetIdx }: Args): {
     const w = new Worker(new URL('../lib/solver.worker.ts', import.meta.url), { type: 'module' })
     w.onmessage = (e: MessageEvent<{ id: number; payload: Outcome }>) => {
       if (e.data.id !== latestId.current) return // superseded by a newer edit
-      setOutcome(e.data.payload)
+      setSolved({ outcome: e.data.payload, input: inflight.current[e.data.id] })
+      delete inflight.current[e.data.id]
       setPending(false)
     }
     workerRef.current = w
@@ -50,20 +55,24 @@ export function useSolve({ spirits, ultimates, rules, targetIdx }: Args): {
 
   useEffect(() => {
     const id = ++latestId.current
-    const req: SolveRequest = { id, spirits, ultimates, rules, targetIdx }
+    const input: SolveInput = { spirits, ultimates, rules, targetIdx }
     const w = workerRef.current
     if (!w) {
       try {
-        setOutcome(solve(spirits, ultimates, rules, targetIdx))
+        setSolved({ outcome: solve(spirits, ultimates, rules, targetIdx), input })
       } catch (err) {
-        setOutcome({ errorKey: 'err_solver', vars: { msg: err instanceof Error ? err.message : String(err) } })
+        setSolved({
+          outcome: { errorKey: 'err_solver', vars: { msg: err instanceof Error ? err.message : String(err) } },
+          input,
+        })
       }
       setPending(false)
       return
     }
+    inflight.current[id] = input
     setPending(true)
-    w.postMessage(req)
+    w.postMessage({ id, ...input } satisfies SolveRequest)
   }, [spirits, ultimates, rules, targetIdx])
 
-  return { outcome, pending }
+  return { outcome: solved?.outcome ?? null, input: solved?.input ?? null, pending }
 }

@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button'
 import { useI18n } from '@/context/I18nContext'
 import { useAppState } from '@/context/StateContext'
 import { genPost } from '@/lib/genPost'
+import type { Rules, Spirit } from '@/data/seasons'
 import type { SolveResult } from '@/lib/solver'
 
-export function DiscordPost({ result }: { result: SolveResult }) {
+export function DiscordPost({ result, spirits, rules }: { result: SolveResult; spirits: Spirit[]; rules: Rules }) {
   const { t, lang } = useI18n()
   const { state } = useAppState()
   const [copied, setCopied] = useState(false)
@@ -15,8 +16,8 @@ export function DiscordPost({ result }: { result: SolveResult }) {
   const post = genPost({
     seasonName: state.seasonName,
     startDate: state.startDate,
-    rules: state.rules,
-    spirits: state.spirits,
+    rules: rules,
+    spirits: spirits,
     best: result.best,
     cumHearts: result.cumHearts,
     targetIdx: result.targetIdx,
