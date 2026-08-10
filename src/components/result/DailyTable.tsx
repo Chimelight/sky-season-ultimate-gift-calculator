@@ -20,6 +20,17 @@ export function DailyTable({ result }: { result: SolveResult }) {
 
   const rows = useMemo(() => buildSchedule(result, state.rules), [result, state.rules])
 
+  // Which season day is today. A returning player opens this table to find
+  // exactly one thing — where am I now — so mark it rather than making them
+  // count dates. Null whenever today falls outside the plan.
+  const todayDay = useMemo(() => {
+    const [y, m, d] = state.startDate.split('-').map(Number)
+    if (!y || !m || !d) return null
+    const now = new Date()
+    const diff = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - Date.UTC(y, m - 1, d)
+    return Math.floor(diff / 86_400_000) + 1
+  }, [state.startDate])
+
   function dayDate(n: number) {
     try { return formatDate(addDays(state.startDate, n - 1)) } catch { return '—' }
   }
@@ -53,23 +64,32 @@ export function DailyTable({ result }: { result: SolveResult }) {
               <Fragment key={r.day}>
                 {r.steps.map((s, i) => {
                   const notable = s.completes || s.ultimates.length > 0
+                  const isToday = r.day === todayDay
                   // Repeat the spirit only when it changes; the date spans the day.
                   const sameSpirit = i > 0 && r.steps[i - 1].spiritIdx === s.spiritIdx
                   return (
                     <tr
                       key={i}
-                      className={`align-middle ${i === r.steps.length - 1 ? 'border-b' : ''} ${notable ? 'bg-muted/40' : ''}`}
+                      className={`align-middle ${i === r.steps.length - 1 ? 'border-b' : ''} ${notable ? 'bg-muted/40' : ''} ${isToday ? 'bg-primary/5' : ''}`}
                     >
                       {i === 0 && (
-                        <td rowSpan={r.steps.length} className="py-1.5 pr-2 align-top whitespace-nowrap border-r">
+                        <td
+                          rowSpan={r.steps.length}
+                          className={`py-1 pr-2 align-top whitespace-nowrap border-r ${
+                            isToday ? 'border-l-2 border-l-primary pl-2' : ''
+                          }`}
+                        >
                           <div className="font-medium tabular-nums">{t('day_prefix', { n: r.day })}</div>
                           <div className="text-xs text-muted-foreground">{dayDate(r.day)}</div>
+                          {isToday && (
+                            <Badge variant="default" className="mt-0.5">{t('badge_today')}</Badge>
+                          )}
                         </td>
                       )}
-                      <td className="py-1.5 px-2 text-xs text-muted-foreground wrap-anywhere break-words">
+                      <td className="py-1 px-2 text-xs text-muted-foreground wrap-anywhere break-words">
                         {s.spiritIdx === null || sameSpirit ? '' : spiritName(s.spiritIdx)}
                       </td>
-                      <td className="py-1.5 px-2">
+                      <td className="py-1 px-2">
                         <div className="flex flex-wrap items-center gap-1">
                           {eventBadge(s)}
                           {s.skips.map((sk, k) => (
@@ -79,7 +99,7 @@ export function DailyTable({ result }: { result: SolveResult }) {
                           ))}
                         </div>
                       </td>
-                      <td className="py-1.5 px-2 text-right tabular-nums text-xs whitespace-nowrap">
+                      <td className="py-1 px-2 text-right tabular-nums text-xs whitespace-nowrap">
                         {s.candles > 0 ? (
                           <span className={GAIN}>+{s.candles}</span>
                         ) : s.candles < 0 ? (
@@ -88,10 +108,10 @@ export function DailyTable({ result }: { result: SolveResult }) {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="py-1.5 px-2 text-right tabular-nums text-xs whitespace-nowrap">
+                      <td className="py-1 px-2 text-right tabular-nums text-xs whitespace-nowrap">
                         <span className={s.balance === 0 ? 'text-muted-foreground' : ''}>{s.balance}</span>
                       </td>
-                      <td className="py-1.5 px-2 text-xs whitespace-nowrap">
+                      <td className="py-1 px-2 text-xs whitespace-nowrap">
                         {s.gain > 0 ? (
                           <span className="tabular-nums">
                             <span className={GAIN}>
@@ -109,7 +129,7 @@ export function DailyTable({ result }: { result: SolveResult }) {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="py-1.5 pl-2">
+                      <td className="py-1 pl-2">
                         <div className="flex flex-wrap gap-1">
                           {s.kind === 'collect' && r.day === 1 && state.rules.pass > 0 && (
                             <Badge variant="secondary">{t('badge_pass', { pass: state.rules.pass })}</Badge>

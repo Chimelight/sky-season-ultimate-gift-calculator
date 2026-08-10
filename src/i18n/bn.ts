@@ -71,6 +71,7 @@ export const translations = {
   badge_item_skip: "লেভেল {lv} বাদ {c}C",
   badge_item_heart: "লেভেল ৫ হার্ট {c}C",
   badge_pass: "সিজন পাস +{pass}C",
+  badge_today: "আজ",
   badge_spirit_done: "{name} সম্পন্ন",
   badge_ult_ready: "{ord} আলটিমেট সংগ্রহযোগ্য",
   note_daily: "প্রতিটি দিন ঘটনার ক্রম অনুসারে খোলা হয়। আইটেম কেনা ও আমন্ত্রণ — দুটোই বন্ধুত্ব বাড়ায়; কোনো স্তরের ক্রমযোজিত চাহিদা পূরণ হলে পরেরটি খোলে। মোমবাতি জমলে সেদিনই কেনা ধরা হয়।",

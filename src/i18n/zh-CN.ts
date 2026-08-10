@@ -71,6 +71,7 @@ export const translations = {
   badge_item_skip: "{lv} 级 跳 {c}",
   badge_item_heart: "5 级 爱心 {c}",
   badge_pass: "季卡 +{pass} 蜡烛",
+  badge_today: "今天",
   badge_spirit_done: "{name} 完成",
   badge_ult_ready: "{ord}毕业礼可领取",
   note_daily: "每天按实际发生顺序展开。购买物品与每日邀请都会增加好感度，累计达到该等级要求即解锁下一级。蜡烛不足时，购买会顺延到攒够的那天。",

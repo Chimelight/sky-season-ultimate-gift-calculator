@@ -71,6 +71,7 @@ export const translations = {
   badge_item_skip: "Lv{lv} skip {c}C",
   badge_item_heart: "Lv5 heart {c}C",
   badge_pass: "Season Pass +{pass}C",
+  badge_today: "Today",
   badge_spirit_done: "{name} complete",
   badge_ult_ready: "{ord} Ultimate claimable",
   note_daily: "Each day is expanded in the order things happen. Buying an item and inviting both add friendship; reaching a level's cumulative requirement unlocks the next. A purchase settles on the day its candles are available.",

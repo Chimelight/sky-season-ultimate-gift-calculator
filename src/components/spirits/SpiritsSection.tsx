@@ -38,7 +38,18 @@ export function SpiritsSection() {
           </Button>
         )}
       </div>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(20rem,100%),1fr))] gap-3">
+      {/* Read mode shows a label and a few digits per level and fits four
+          across. Edit mode also has to seat the +/- pair and up to three number
+          inputs on that line — the label and buttons alone eat half a 235px
+          card — so it takes a wider floor and lands on three. Same auto-fit
+          rule, different minimum. */}
+      <div
+        className={
+          editing
+            ? 'grid grid-cols-[repeat(auto-fit,minmax(min(17rem,100%),1fr))] gap-3'
+            : 'grid grid-cols-[repeat(auto-fit,minmax(min(13rem,100%),1fr))] gap-3'
+        }
+      >
         {state.spirits.map((sp, idx) => (
           <SpiritCard
             key={idx}

@@ -13,6 +13,7 @@ export default {
         'fluid-xs': ['clamp(0.7rem, 0.65rem + 0.2vw, 0.78rem)', { lineHeight: '1.4' }],
         'fluid-sm': ['clamp(0.8rem, 0.75rem + 0.3vw, 0.9rem)', { lineHeight: '1.45' }],
         'fluid-base': ['clamp(0.9rem, 0.85rem + 0.4vw, 1.05rem)', { lineHeight: '1.5' }],
+        'fluid-xl': ['clamp(1.1rem, 0.95rem + 0.8vw, 1.4rem)', { lineHeight: '1.2' }],
         'fluid-2xl': ['clamp(1.3rem, 1.1rem + 1.2vw, 1.75rem)', { lineHeight: '1.2' }],
       },
       minWidth: {

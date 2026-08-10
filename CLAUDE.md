@@ -125,7 +125,7 @@ Never use `h-7` for interactive controls — too small for touch targets.
 | Form label | `text-xs font-medium text-muted-foreground` | Labels above inputs |
 | Body | `text-sm` | General content |
 | Caption | `text-xs text-muted-foreground` | Helper text, table headers |
-| Metric value | `text-2xl font-bold tabular-nums` | Large number displays |
+| Metric value | `text-fluid-xl font-bold tabular-nums` | Large number displays |
 
 ### Layout Rules
 

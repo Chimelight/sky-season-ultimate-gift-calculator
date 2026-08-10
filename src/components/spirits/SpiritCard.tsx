@@ -53,18 +53,24 @@ export function SpiritCard({ spirit, idx, canRemove }: SpiritCardProps) {
             const items = spirit.levels[li] ?? []
             const count = Math.max(1, items.length)
             return (
-              <div key={li} className="flex flex-col @[20rem]:flex-row @[20rem]:items-center gap-1 @[20rem]:gap-2">
+              <div
+                key={li}
+                // Read mode only needs room for a label and a few digits, so it
+                // goes inline far earlier than edit mode, which has to seat four
+                // inputs and the +/- pair before it can share a line.
+                className="flex flex-col @[11rem]:flex-row @[11rem]:items-center gap-0.5 @[11rem]:gap-2"
+              >
                 <span className="text-xs text-muted-foreground shrink-0 min-w-[3ch] wrap-anywhere">
                   {t('lv_label', { n: li + 1 })}
                 </span>
                 {editing ? (
                   <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(3.5rem,100%),1fr))] gap-2 flex-1 min-w-0">
+                    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(2.75rem,100%),1fr))] gap-1.5 flex-1 min-w-0">
                       {Array.from({ length: count }, (_, pos) => (
                         <Input
                           key={pos}
                           type="number"
-                          className="h-8 text-sm min-w-0 text-center"
+                          className="h-8 text-sm min-w-0 text-center px-1"
                           value={items[pos] || ''}
                           placeholder={t('cost_placeholder')}
                           onChange={e => dispatch({ type: 'SET_SPIRIT_COST', spiritIdx: idx, lvl: li, pos, value: e.target.value })}
@@ -75,7 +81,7 @@ export function SpiritCard({ spirit, idx, canRemove }: SpiritCardProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground disabled:opacity-30"
+                        className="h-8 w-7 shrink-0 text-muted-foreground disabled:opacity-30"
                         disabled={count <= 1}
                         title={t('item_remove')}
                         onClick={() => dispatch({ type: 'REMOVE_SPIRIT_ITEM', spiritIdx: idx, lvl: li })}
@@ -85,7 +91,7 @@ export function SpiritCard({ spirit, idx, canRemove }: SpiritCardProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground disabled:opacity-30"
+                        className="h-8 w-7 shrink-0 text-muted-foreground disabled:opacity-30"
                         disabled={count >= maxItemsPerLevel}
                         title={t('item_add')}
                         onClick={() => dispatch({ type: 'ADD_SPIRIT_ITEM', spiritIdx: idx, lvl: li })}
