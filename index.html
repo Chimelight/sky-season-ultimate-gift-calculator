@@ -1,99 +1,19 @@
 <!DOCTYPE html>
-<html lang="en" data-i18n-root>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta property="og:title" content="Sky — Season Ultimate Gift Calculator">
-  <meta property="og:description" content="Plan the fastest route to seasonal ultimate gifts in Sky with fully customizable spirits, costs, and skip days.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://chimelight.github.io/sky-season-ultimate-gift-calculator/">
-  <meta property="og:image" content="https://chimelight.github.io/sky-season-ultimate-gift-calculator/preview.png">
-  <meta name="twitter:card" content="summary_large_image">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta property="og:title" content="Sky — Season Ultimate Gift Calculator" />
+  <meta property="og:description" content="Plan the fastest route to seasonal ultimate gifts in Sky. Customise spirits, item costs and friendship rules, then read the optimal day-by-day route." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://chimelight.github.io/sky-season-ultimate-gift-calculator/" />
+  <meta property="og:image" content="https://chimelight.github.io/sky-season-ultimate-gift-calculator/preview.png" />
+  <meta name="twitter:card" content="summary_large_image" />
   <title>Sky — Season Ultimate Gift Calculator</title>
-  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-  <link rel="apple-touch-icon" href="assets/favicon.svg">
-  <link rel="stylesheet" href="assets/styles.css">
-  <script>(function(){var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})()</script>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
 </head>
 <body>
-  <div class="container">
-    <header class="page-header">
-      <div class="page-header-text">
-        <h1 id="page-title">Season — Ultimate Gift Calculator</h1>
-        <div class="subtitle" data-i18n="subtitle">Sky: Children of the Light · Configure spirits, items per level, and ultimate gifts · Auto-computes optimal route</div>
-      </div>
-      <div class="header-actions">
-        <select id="lang-select" class="lang-select"></select>
-        <button class="icon-btn" id="theme-btn" aria-label="Toggle theme"></button>
-        <a class="icon-btn" href="https://github.com/Chimelight/sky-season-ultimate-gift-calculator" target="_blank" rel="noopener noreferrer" aria-label="View source on GitHub" data-i18n="aria_github" data-i18n-attr="aria-label">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
-        </a>
-      </div>
-    </header>
-
-    <div class="cc">
-
-      <div class="sect">
-        <div class="card">
-          <div class="rg">
-            <div class="rl"><label data-i18n="label_season_name">Season Name</label><input type="text" id="s-name"></div>
-            <div class="rl"><label data-i18n="label_start_date">Season Start (Day 1)</label><input type="date" id="s-start"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="sect">
-        <div class="sect-head"><h3 data-i18n="section_rules">Rules</h3><div class="sect-head-actions"><select id="season-picker" class="btn-sm" style="display:none;"></select><button class="btn-sm" id="reset-btn" data-i18n="btn_load_season">Load Season</button></div></div>
-        <div class="card">
-          <div class="rg">
-            <div class="rl"><label data-i18n="label_cpd">Candles / Day</label><input type="number" id="r-cpd"></div>
-            <div class="rl"><label data-i18n="label_pass">Season Pass Bonus</label><input type="number" id="r-pass"></div>
-            <div class="rl"><label data-i18n="label_heart">Heart Cost (Lv 5)</label><input type="number" id="r-heart"></div>
-          </div>
-          <div class="note" data-i18n="note_skip_days">Skip Days Per Level. Half-skip is used when a level has 2 items and you buy one of them.</div>
-          <div class="scroll-x">
-            <table class="t skip-tbl">
-              <thead><tr><th></th><th data-i18n="th_lv1">Lv 1</th><th data-i18n="th_lv2">Lv 2</th><th data-i18n="th_lv3">Lv 3</th><th data-i18n="th_lv4">Lv 4</th></tr></thead>
-              <tbody>
-                <tr><td data-i18n="fullskip_days">Full-Skip Days</td>
-                  <td><input type="number" id="r-l1f"></td><td><input type="number" id="r-l2f"></td>
-                  <td><input type="number" id="r-l3f"></td><td><input type="number" id="r-l4f"></td></tr>
-                <tr><td data-i18n="halfskip_days">Half-Skip Days</td>
-                  <td><input type="number" id="r-l1h"></td><td><input type="number" id="r-l2h"></td>
-                  <td><input type="number" id="r-l3h"></td><td><input type="number" id="r-l4h"></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div class="sect">
-        <div class="sect-head"><h3><span data-i18n="section_spirits">Spirits</span> <span id="spirit-count" class="lbl-sm"></span></h3><button class="btn-sm" id="add-spirit" data-i18n="btn_add_spirit">+ Add Spirit</button></div>
-        <div id="spirits-list" class="spirits-grid"></div>
-        <div class="note" data-i18n="note_spirit_levels">Each Level: Enter cost of the item(s). Leave the 2nd field blank for levels with only 1 item.</div>
-      </div>
-
-      <div class="sect">
-        <div class="sect-head"><h3 data-i18n="section_ultimates">Ultimate Gifts</h3><button class="btn-sm" id="add-ult" data-i18n="btn_add_ult">+ Add Ultimate</button></div>
-        <div class="card">
-          <div id="ults-list"></div>
-          <div id="ult-summary" class="note"></div>
-        </div>
-      </div>
-
-      <div class="sect">
-        <h3 data-i18n="section_result">Result</h3>
-        <div id="result-out"></div>
-      </div>
-
-    </div>
-  </div>
-
-  <script src="assets/i18n.zh-CN.js"></script>
-  <script src="assets/i18n.bn.js"></script>
-  <script src="assets/i18n.js"></script>
-  <script src="assets/seasons.js"></script>
-  <script src="assets/app.js"></script>
-  <script>window.initLangSelect();</script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
