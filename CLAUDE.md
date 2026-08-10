@@ -4,30 +4,154 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Running Locally
 
-No build step is required. Open `index.html` directly in a browser, or serve it:
-
 ```bash
-python3 -m http.server 8080
-# then open http://localhost:8080
+npm install --legacy-peer-deps
+npm run dev
+# then open http://localhost:5173
+```
+
+Build for production:
+```bash
+npm run build
+```
+
+Checks:
+```bash
+npm run check:model       # friendship/day arithmetic in src/lib/solver.ts
+npm run check:responsive  # viewport × language layout regression (needs Playwright browsers)
 ```
 
 ## Architecture
 
-The app is a single-page static calculator with these files:
+React + TypeScript SPA, built with Vite. UI components from shadcn/ui (Radix UI + Tailwind CSS). Theme switching via next-themes.
 
-- `index.html` — static shell; all dynamic content is rendered by JS into `#spirits-list`, `#ults-list`, `#ult-summary`, and `#result-out`
-- `assets/seasons.js` — season data configuration; exposes `window.SEASONS` (array, newest first); loaded before `app.js`
-- `assets/i18n.<code>.js` — per-language translation files (e.g. `i18n.zh-CN.js`, `i18n.bn.js`); each registers into `window.TRANSLATIONS`, `window.ORDINALS`, `window.DATE_LOCALES`, `window.LANGS`; must be loaded before `i18n.js`
-- `assets/i18n.js` — internationalization core; English strings + logic; exposes `window.t(key, vars)`, `window.setLang(code)`, `window.getLang()`, `window.LANGS`, `window.ordinal`, `window.formatDate`; loaded after language files, before `app.js`
-- `assets/app.js` — all logic and rendering, wrapped in a single IIFE
-- `assets/styles.css` — all styles using CSS custom properties for light/dark theming
+### Key files
 
-**State model** (`app.js`): A single in-memory `state` object (season name, start date, rules, spirits array, ultimates array, target index). `defaultState()` clones the first entry in `window.SEASONS`. All inputs write back to `state` via event listeners and then call `scheduleRender()`, which debounces via `requestAnimationFrame`. The season picker dropdown (`#season-picker`) calls `cloneSeason()` to reset state to any season in `seasons.js`.
+- `src/main.tsx` — entry point
+- `src/App.tsx` — root: mounts ThemeProvider, StateProvider, I18nProvider, then renders layout
+- `src/index.css` — Tailwind base + shadcn CSS variables (light/dark)
+- `tailwind.config.js` — Tailwind config with shadcn color tokens
 
-**Core algorithm** (`enumSpirit`): For each spirit, enumerates all possible buy/skip combinations across 4 levels and prunes Pareto-dominated strategies (cost vs. skip-days). The outer solver then combines per-spirit strategies to find the globally optimal plan given a candle budget and target ultimate gift.
+### Data & Logic (`src/data/`, `src/lib/`, `src/i18n/`)
 
-**Rendering**: The result section renders a day-by-day schedule table plus a copyable post template. Spirit cards and ultimate rows are rendered imperatively into the DOM from state on every `renderResult()` call.
+- `src/data/seasons.ts` — `SEASONS` array (newest first); add new seasons here
+- `src/i18n/index.ts` — i18n core: `t(lang, key, vars)`, `getOrdinal(lang)`, `formatDate(dt, lang)`, `LANGS`
+- `src/i18n/en.ts`, `zh-CN.ts`, `bn.ts` — translation objects + ordinal functions per language
+- `src/lib/solver.ts` — `enumSpirit` + `solve`: core algorithm, pure functions, no React dependency
+- `src/lib/genPost.ts` — `genPost`: generates the copyable Discord post string
+- `src/lib/schedule.ts` — `buildSchedule`: expands a solved plan into `DayRow[]`, each holding the ordered `Step[]` for that day (dailies / invite / buy / heart, with candles, running balance, friendship progress and milestones); `formatFriendship` trims the fractional values
+- `src/lib/helpers.ts` — `shortName`, `addDays`, `describeOpt`
+- `src/lib/utils.ts` — `cn()` (clsx + tailwind-merge)
 
-**Adding a season**: Prepend a new entry to `window.SEASONS` in `assets/seasons.js`. The picker and `defaultState()` pick it up automatically — no changes to `app.js` needed.
+### State (`src/context/`)
 
-**i18n**: All user-visible strings go through `window.t(key, vars)`. Static DOM elements use `data-i18n="key"` attributes (applied on load and on `langchange`). Dynamic strings call `t()` directly at render time. `app.js` listens to the `window` `langchange` event and calls `scheduleRender()` to re-render. Language preference is saved to `localStorage`. To add a language, create `assets/i18n.<code>.js` following the structure of an existing language file, then add a `<script>` tag for it in `index.html` before `i18n.js`.
+- `src/context/StateContext.tsx` — `useAppState()` hook; `useReducer` manages `AppState` (seasonName, startDate, rules, spirits[], ultimates[], targetIdx). `dispatch` actions: `SET_SEASON_NAME`, `SET_START_DATE`, `SET_RULE`, `SET_SPIRIT_NAME`, `SET_SPIRIT_COST`, `ADD_SPIRIT_ITEM`, `REMOVE_SPIRIT_ITEM`, `ADD_SPIRIT`, `REMOVE_SPIRIT`, `SET_ULTIMATE_HEARTS`, `ADD_ULTIMATE`, `REMOVE_ULTIMATE`, `SET_TARGET_IDX`, `LOAD_SEASON`. Also exposes `editing` / `setEditing` (see Edit Mode) and the `maxSpirits` / `maxItemsPerLevel` caps.
+- `src/context/I18nContext.tsx` — `useI18n()` hook; exposes `t()`, `setLang()`, `lang`, `ordinal()`, `formatDate()`, `langs`
+
+### Components (`src/components/`)
+
+```
+layout/Header.tsx          — sticky header + toolbar: title, season picker, Reset (edit mode only), Edit/Done toggle, lang select, theme toggle, GitHub link
+config/SeasonConfig.tsx    — season name + start date
+config/RulesCard.tsx       — cpd/pass/heart + friendship-per-level
+spirits/SpiritCard.tsx     — single spirit card; levels run Lv4→Lv1 to match the tree map, per-level +/− in edit mode
+spirits/SpiritsSection.tsx — spirit grid + add button
+ultimates/UltimatesSection.tsx — ultimate list + summary
+result/ResultSection.tsx   — runs solve(), distributes result to sub-components
+result/MetricsSummary.tsx  — Day/Candle metric cards
+result/StrategyTable.tsx   — per-spirit Lv1–4 strategy table with Buy/Skip badges
+result/TreeMap.tsx         — SVG tree map (bottom-up, used spirits only)
+result/DailyTable.tsx      — one row per event from buildSchedule(), date cell spans the day, milestone badges
+result/DiscordPost.tsx     — copyable Discord post textarea + copy button
+```
+
+### shadcn/ui components (`src/components/ui/`)
+
+`button`, `input`, `label`, `card`, `badge`, `select`, `table`, `alert` — all hand-scaffolded following shadcn patterns.
+
+**Core algorithm** (`src/lib/solver.ts`): For each spirit, `enumSpirit` enumerates all buy/skip combinations across 4 levels and prunes Pareto-dominated strategies (cost vs. invite days). `solve` combines per-spirit strategies to find the globally optimal plan given a candle budget and target ultimate.
+
+**Friendship model**: Friendship has two interchangeable sources — buying items (spends candles) and daily invites (spends days) — and selecting the mix is the optimization this app performs. A level is worth `rules.l{n}f` friendship, split evenly across however many items it holds (so 3 items pay `8/3` each); invites pay 1/day. Do not describe invites as "filling the gap left by items": neither source is primary, and that framing misstates the problem. Friendship never resets, so thresholds are cumulative and fractional surplus carries into later levels — invite days come from a running maximum over the per-level deficits, *not* a per-level sum. `LevelOpt.days` is the increment attributed to that level, which is why the increments still add up to `Strategy.days`. A level may hold any number of items; there is no half/full-skip special case. Guard the arithmetic with `npm run check:model` — it covers the fractional carry and the `3 * (8/3) === 7.999…` float trap.
+
+**Edit Mode**: Season data is read-only on load — a first-time user should read a plan, not face a wall of inputs. `editing` (in `StateContext`) gates every config control: SeasonConfig, RulesCard, spirit cards, ultimate heart counts, and the add/remove buttons all swap between `Input` and `StaticField` (`src/components/ui/static-field.tsx`, which matches the `h-8` control height so toggling does not reflow). The "prioritize" radio in UltimatesSection stays live in both modes — it selects which result to optimize for, so it is a query, not season data.
+
+**Header toolbar**: The season picker loads on change — there is no separate load button; `loadSeason()` sets the picker index and dispatches `LOAD_SEASON` together. Reset re-dispatches `LOAD_SEASON` for the *already-selected* index, which is what makes it discard edits without changing season. It only renders in edit mode, since outside it there is nothing to discard.
+
+**Items per level**: A level holds any number of items up to `maxItemsPerLevel`. The stored array length *is* the slot count — `ADD_SPIRIT_ITEM` appends a `0`, `REMOVE_SPIRIT_ITEM` pops. A `0` means "blank slot", and the solver filters those out before dividing friendship, so a blank never inflates the divisor. Do not re-introduce trailing-blank trimming in `SET_SPIRIT_COST`: it would delete a freshly added slot the moment the user typed in an earlier one.
+
+**Daily breakdown** (`src/lib/schedule.ts`): The solver only produces per-spirit totals, so every question of *when* is derived here. `buildSchedule` emits one `Step` per event — `collect` (the dailies, which open every day), `invite`, `buy`, `heart` — grouped into a `DayRow`. `DailyTable` renders one table row per step with the date cell spanning the day.
+
+Four rules make the sequence honest; each was a bug before it was a rule, and `npm run check:model` pins all of them:
+
+1. **Buy as early as possible.** Owning an item sooner is strictly better, so each purchase group is pinned to its deadline first — a baseline that is feasible because it is what the solver costed — then pulled back to the earliest reachable, affordable day. Pulling a group only raises spend between its new day and its old one, so checking that window proves nothing else must move and no ultimate can slip.
+2. **Deadline-bound items outrank tails.** A tail (anything past a spirit's last invite phase, including the Lv5 heart) only needs to exist by the ultimate it gates; an item with invites still ahead of it must exist *before* them. A tail's deadline is its gating ultimate's day, not the spirit's own earliest finish — otherwise it reserves candles a later spirit's items could be using.
+3. **A level's items are due by the end of the spirit's whole invite block**, not its own phase. The running-max that sets the day count binds at the deepest level and every item below feeds it; pinning per phase is tighter than the plan requires and makes the baseline unaffordable.
+4. **Invites are labelled by the level the spirit has actually reached**, computed from friendship — never the solver's phase. Candles do run out, and an item can genuinely settle after the invites it was meant to precede; a phase label would then name a level the spirit is not on.
+
+Do not attribute a spirit's whole cost to its completion day. It reads plausibly and the totals still balance, but the friendship column then implies purchases the spend column says never happened.
+
+**Adding a season**: Prepend a new entry to `SEASONS` in `src/data/seasons.ts`. The season picker and default state pick it up automatically.
+
+**Adding a language**: Create `src/i18n/<code>.ts` following the structure of an existing file (export `translations`, `ordinal`, `dateLocale`). Then add an import and entry in `src/i18n/index.ts` (`TRANSLATIONS`, `ORDINALS`, `DATE_LOCALES`, `LANGS`).
+
+## Design Tokens
+
+These conventions are intentional — do not deviate without a reason.
+
+### Spacing
+
+| Level | Usage | Classes |
+|-------|-------|---------|
+| Tight | Within a component (between siblings) | `gap-2`, `space-y-2` |
+| Normal | Inside a card / between form groups | `gap-3`, `space-y-3`, `p-4` |
+| Loose | Between page-level sections | `space-y-6` |
+
+`CardContent` and `CardHeader` default to `p-4`. Do not add `pt-*`/`pb-*` overrides unless truly necessary.
+
+### Control Heights
+
+| Height | Usage |
+|--------|-------|
+| `h-9` (36px) | Standalone buttons (primary actions) |
+| `h-8` (32px) | All inline controls: inputs inside cards, compact buttons, selects |
+
+Never use `h-7` for interactive controls — too small for touch targets.
+
+### Typography Roles
+
+| Role | Classes | Used for |
+|------|---------|----------|
+| Section title | `text-sm font-semibold tracking-tight` | `<h2>` section headings |
+| Form label | `text-xs font-medium text-muted-foreground` | Labels above inputs |
+| Body | `text-sm` | General content |
+| Caption | `text-xs text-muted-foreground` | Helper text, table headers |
+| Metric value | `text-fluid-xl font-bold tabular-nums` | Large number displays |
+
+### Layout Rules
+
+- **No inline `style={}`** for layout — use Tailwind arbitrary values (e.g. `[grid-template-columns:max-content_1fr_1fr]`).
+- **Lists of variable-length items** (e.g. UltimatesSection): use `flex flex-wrap` per row, not a single CSS grid spanning all rows. This prevents long translations from breaking cross-row column alignment.
+- Always add `shrink-0` to labels and icons inside flex rows; `min-w-0` to text containers that may truncate.
+- Horizontal overflow on tables: wrap with `overflow-x-auto`.
+
+### Colors
+
+Palette is shadcn zinc — do not add custom hex colors. Use semantic tokens (`text-muted-foreground`, `border-input`, etc.) so dark mode works automatically.
+
+Badge variants for strategy display: `buy` (green), `skip` (amber), `order` (primary/10). These are defined in `src/components/ui/badge.tsx` and must stay consistent with the SVG TreeMap colors in `src/components/result/TreeMap.tsx`.
+
+Numbers in the daily breakdown carry a *second, independent* encoding: badges colour the **action**, numerals colour the **flow**. `GAIN` (green) is anything arriving — candles collected, friendship earned — and `SPEND` (rose) is candles leaving; both are declared at the top of `DailyTable.tsx`. So a purchase row reads green badge / rose candles / green friendship, which is correct rather than contradictory: you bought something, candles left, friendship arrived. Rose appears nowhere else, so it never reads as an error the way `destructive` would.
+
+### Responsive Rules
+
+Layouts must remain usable across viewports (280px–2560px) and all languages (including languages with 1.6×+ text expansion vs English, e.g. Bengali). The design is **container-query driven**, not viewport-breakpoint driven. Rules:
+
+1. **No new named breakpoints.** New responsive variants use `@container` queries or intrinsic sizing (`grid-cols-[repeat(auto-fit,minmax(min(Xrem,100%),1fr))]`). Legacy `sm:` is grandfathered but not to be extended.
+2. **Truncation is forbidden** on user-entered content or translated strings. Use `wrap-anywhere` + `break-words`. `line-clamp-N` only when content is recoverable elsewhere and visually required.
+3. **No `hidden sm:*`** hiding. Content must be reachable at every supported viewport; hide only decorative affordances (tooltips, hover hints).
+4. **Text widths use `ch`**: `min-w-[12ch]`, `w-[6ch]`. Never `w-16` / `w-28` on slots holding text or translated labels.
+5. **Grids of unknown count** use `grid-cols-[repeat(auto-fit,minmax(min(Xrem,100%),1fr))]`, not `grid-cols-N sm:grid-cols-M`.
+6. **Sections that host cards** declare `[container-type:inline-size]` so nested cards react to their own width, not viewport.
+7. **Dynamic-content font sizes** use `text-fluid-*` tokens (`fluid-xs`, `fluid-sm`, `fluid-base`, `fluid-2xl`), not static `text-2xl`.
+8. **Supported viewport range: 280px–2560px.** Below 280px, `body` enables horizontal scroll (honest degradation). Do not design for sub-280px rendering.
+9. **New language checklist**: at 280/360/480px, inspect RulesCard skip labels, UltimatesSection row, Header title, StrategyTable badges. Run `npm run check:responsive` for automated regression.
