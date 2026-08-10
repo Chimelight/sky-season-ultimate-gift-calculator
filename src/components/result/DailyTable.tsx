@@ -7,6 +7,13 @@ import { buildSchedule, formatFriendship } from '@/lib/schedule'
 import type { Step } from '@/lib/schedule'
 import type { SolveResult } from '@/lib/solver'
 
+// Numbers are coloured by flow direction, which is a different axis from the
+// badges: a badge says what the event was, these say which way the value moved.
+// A purchase row therefore reads green badge / red candles / green friendship —
+// bought something, candles left, friendship arrived.
+const GAIN = 'text-green-700 dark:text-green-400'
+const SPEND = 'text-rose-700 dark:text-rose-400'
+
 export function DailyTable({ result }: { result: SolveResult }) {
   const { t, ordinal, formatDate } = useI18n()
   const { state } = useAppState()
@@ -73,17 +80,30 @@ export function DailyTable({ result }: { result: SolveResult }) {
                         </div>
                       </td>
                       <td className="py-1.5 px-2 text-right tabular-nums text-xs whitespace-nowrap">
-                        {s.candles > 0 ? `+${s.candles}` : s.candles < 0 ? `−${-s.candles}` : <span className="text-muted-foreground">—</span>}
+                        {s.candles > 0 ? (
+                          <span className={GAIN}>+{s.candles}</span>
+                        ) : s.candles < 0 ? (
+                          <span className={SPEND}>−{-s.candles}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </td>
-                      <td className="py-1.5 px-2 text-right tabular-nums text-xs whitespace-nowrap">{s.balance}</td>
+                      <td className="py-1.5 px-2 text-right tabular-nums text-xs whitespace-nowrap">
+                        <span className={s.balance === 0 ? 'text-muted-foreground' : ''}>{s.balance}</span>
+                      </td>
                       <td className="py-1.5 px-2 text-xs whitespace-nowrap">
                         {s.gain > 0 ? (
                           <span className="tabular-nums">
-                            {t('step_gain', {
-                              gain: formatFriendship(s.gain),
-                              after: formatFriendship(s.after),
-                              req: s.required,
-                            })}
+                            <span className={GAIN}>
+                              {t('step_gain', { gain: formatFriendship(s.gain) })}
+                            </span>
+                            <span className="text-muted-foreground mx-1">→</span>
+                            <span>
+                              {t('step_progress', {
+                                after: formatFriendship(s.after),
+                                req: s.required,
+                              })}
+                            </span>
                           </span>
                         ) : (
                           <span className="text-muted-foreground">—</span>

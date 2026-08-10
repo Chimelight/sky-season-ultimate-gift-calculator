@@ -140,6 +140,8 @@ Palette is shadcn zinc — do not add custom hex colors. Use semantic tokens (`t
 
 Badge variants for strategy display: `buy` (green), `skip` (amber), `order` (primary/10). These are defined in `src/components/ui/badge.tsx` and must stay consistent with the SVG TreeMap colors in `src/components/result/TreeMap.tsx`.
 
+Numbers in the daily breakdown carry a *second, independent* encoding: badges colour the **action**, numerals colour the **flow**. `GAIN` (green) is anything arriving — candles collected, friendship earned — and `SPEND` (rose) is candles leaving; both are declared at the top of `DailyTable.tsx`. So a purchase row reads green badge / rose candles / green friendship, which is correct rather than contradictory: you bought something, candles left, friendship arrived. Rose appears nowhere else, so it never reads as an error the way `destructive` would.
+
 ### Responsive Rules
 
 Layouts must remain usable across viewports (280px–2560px) and all languages (including languages with 1.6×+ text expansion vs English, e.g. Bengali). The design is **container-query driven**, not viewport-breakpoint driven. Rules:
