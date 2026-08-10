@@ -28,10 +28,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
-      # The project pins peer resolution this way; see CLAUDE.md.
-      - run: npm ci --legacy-peer-deps
+      # No npm cache and no `npm ci`: package-lock.json is gitignored by this
+      # project, and both of those require a lockfile in the repo. This is the
+      # install command CLAUDE.md documents.
+      - run: npm install --legacy-peer-deps
 
       - run: npm run build
 
