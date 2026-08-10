@@ -94,8 +94,8 @@ check('skip a 1-item Lv1 → 4 days', daysFor([[40], [19, 7], [24, 10], [28]], [
 
 console.log('\nDaily schedule reconciles with the solve')
 for (const season of SEASONS) {
-  const res = solve(season.spirits, season.ultimates, season.rules, season.targetIdx, k => k)
-  if (res.error) { console.log(`  FAIL ${season.id} — solver: ${res.error}`); failed++; continue }
+  const res = solve(season.spirits, season.ultimates, season.rules, season.targetIdx)
+  if (res.errorKey) { console.log(`  FAIL ${season.id} — solver: ${res.errorKey}`); failed++; continue }
   const { best } = res
   const rows = buildSchedule(res, season.rules)
   const r = season.id.padEnd(26)

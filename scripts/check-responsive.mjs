@@ -100,7 +100,7 @@ const assertNoClip = async (page) => {
 const setLang = async (page, lang) => {
   // Language stored in localStorage by I18nContext under key "lang"
   await page.evaluate(l => localStorage.setItem('lang', l), lang)
-  await page.reload({ waitUntil: 'networkidle' })
+  await page.reload({ waitUntil: 'domcontentloaded' })
 }
 
 const run = async () => {
@@ -117,8 +117,12 @@ const run = async () => {
     for (const lang of LANGS) {
       const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } })
       const page = await ctx.newPage()
-      await page.goto(BASE_URL, { waitUntil: 'networkidle' })
+      // Not networkidle: the solver worker's module request never settles in
+      // Playwright's network log, so idle never fires. Wait for the app to have
+      // actually painted a result instead — a truer readiness signal anyway.
+      await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' })
       await setLang(page, lang)
+      await page.waitForSelector('table tbody tr', { timeout: 15000 })
       for (const width of VIEWPORTS) {
         await page.setViewportSize({ width, height: 900 })
         await sleep(150) // allow container queries to settle

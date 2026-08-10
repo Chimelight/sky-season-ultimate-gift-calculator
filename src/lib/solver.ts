@@ -33,7 +33,11 @@ export interface SolveResult {
 }
 
 export interface SolveError {
-  error: string
+  /** An i18n key, not a message: the solver runs in a worker where `t` is
+   *  unavailable, and translating here would also re-solve on every language
+   *  switch. Callers translate. */
+  errorKey: string
+  vars?: Record<string, string | number>
 }
 
 interface LevelInfo {
@@ -237,17 +241,16 @@ export function solve(
   spirits: Spirit[],
   ultimates: Ultimate[],
   rules: Rules,
-  targetIdx: number,
-  tFn: (key: string, vars?: Record<string, string | number>) => string
+  targetIdx: number
 ): SolveResult | SolveError {
   const N = spirits.length
   const cumHearts: number[] = []
   let acc = 0
   for (const u of ultimates) { acc += Math.max(0, +u.hearts || 0); cumHearts.push(acc) }
   const K = acc
-  if (ultimates.length === 0 || K === 0) return { error: tFn('err_no_ult') }
-  if (N === 0) return { error: tFn('err_no_spirit') }
-  if (K > N) return { error: tFn('err_hearts', { hearts: K, count: N, more: K - N }) }
+  if (ultimates.length === 0 || K === 0) return { errorKey: 'err_no_ult' }
+  if (N === 0) return { errorKey: 'err_no_spirit' }
+  if (K > N) return { errorKey: 'err_hearts', vars: { hearts: K, count: N, more: K - N } }
 
   const tIdx = Math.max(0, Math.min(targetIdx, ultimates.length - 1))
   const targetCount = Math.min(cumHearts[tIdx], K)
@@ -304,6 +307,6 @@ export function solve(
   }
 
   rec(0, 0, 0, 0)
-  if (!best) return { error: tFn('err_no_plan') }
+  if (!best) return { errorKey: 'err_no_plan' }
   return { best, cumHearts, targetIdx: tIdx }
 }

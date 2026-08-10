@@ -133,7 +133,12 @@ All user-visible strings go through `t()` from `useI18n()`.
 npm run check:responsive
 ```
 
-Renders the app at 280/360/480px widths and compares against snapshots in [`scripts/__snapshots__/`](scripts/__snapshots__/). See [CLAUDE.md](CLAUDE.md) for the full responsive design rules.
+Renders the app across 8 viewport widths (280-1920px) x 3 languages and asserts
+two things per cell: no horizontal page overflow, and no truncation ellipsis on
+user-entered or translated content. It is an assertion run, not a visual
+snapshot diff -- `scripts/__snapshots__/` only receives a PNG when a cell fails,
+as a diagnostic. Needs Playwright's browsers (`npx playwright install chromium`).
+See [CLAUDE.md](CLAUDE.md) for the full responsive design rules.
 
 ## Notes
 

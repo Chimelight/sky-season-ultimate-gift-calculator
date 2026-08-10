@@ -1,5 +1,6 @@
-import { createContext, useContext, useReducer, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useReducer, useState, type ReactNode } from 'react'
 import { SEASONS, type Spirit, type Ultimate, type Rules, type Season } from '@/data/seasons'
+import { clearPersisted, findSeason, loadPersisted, savePersisted } from '@/lib/persist'
 
 export interface AppState {
   seasonName: string
@@ -8,6 +9,14 @@ export interface AppState {
   spirits: Spirit[]
   ultimates: Ultimate[]
   targetIdx: number
+  /** The SEASONS entry this was loaded from, so the picker can resync. */
+  seasonId: string
+  /**
+   * Whether anything has been edited since the last season load. Only edited
+   * state is persisted: otherwise a returning visitor would stay pinned to a
+   * stale season long after a newer one shipped.
+   */
+  dirty: boolean
 }
 
 function cloneSeason(s: Season): AppState {
@@ -18,10 +27,12 @@ function cloneSeason(s: Season): AppState {
     spirits: s.spirits.map(sp => ({ name: sp.name, levels: sp.levels.map(l => l.slice()) })),
     ultimates: s.ultimates.map(u => ({ ...u })),
     targetIdx: s.targetIdx ?? 0,
+    seasonId: s.id,
+    dirty: false,
   }
 }
 
-function defaultState(): AppState {
+function pristineState(): AppState {
   return SEASONS.length > 0 ? cloneSeason(SEASONS[0]) : {
     seasonName: 'Season',
     startDate: new Date().toISOString().slice(0, 10),
@@ -29,6 +40,21 @@ function defaultState(): AppState {
     spirits: [{ name: 'Spirit 1', levels: [[4], [19, 7], [24, 10], [28]] }],
     ultimates: [{ hearts: 2 }],
     targetIdx: 0,
+    seasonId: '',
+    dirty: false,
+  }
+}
+
+function defaultState(): AppState {
+  const saved = loadPersisted()
+  if (!saved) return pristineState()
+  // Saved edits win over the newest season, but only the fields that were
+  // actually edited — the season identity is kept so the picker agrees.
+  const base = findSeason(saved.seasonId)
+  return {
+    ...saved,
+    seasonId: base?.id ?? saved.seasonId,
+    dirty: true,
   }
 }
 
@@ -51,7 +77,7 @@ type Action =
 const MAX_SPIRITS = 6
 const MAX_ITEMS_PER_LEVEL = 4
 
-function reducer(state: AppState, action: Action): AppState {
+function applyAction(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SET_SEASON_NAME': return { ...state, seasonName: action.value }
     case 'SET_START_DATE': return { ...state, startDate: action.value || state.startDate }
@@ -123,6 +149,14 @@ function reducer(state: AppState, action: Action): AppState {
   }
 }
 
+// Every action except loading a season marks the state edited. Doing it here
+// rather than in each case means a new action cannot forget to.
+function reducer(state: AppState, action: Action): AppState {
+  const next = applyAction(state, action)
+  if (next === state || action.type === 'LOAD_SEASON') return next
+  return next.dirty ? next : { ...next, dirty: true }
+}
+
 interface StateContextValue {
   state: AppState
   dispatch: React.Dispatch<Action>
@@ -138,6 +172,19 @@ const StateContext = createContext<StateContextValue | null>(null)
 export function StateProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, defaultState)
   const [editing, setEditing] = useState(false)
+
+  // Persist edits so a refresh does not discard them, and drop the record the
+  // moment a season is loaded — an unedited visitor should always land on the
+  // newest season rather than a stale copy of an old one.
+  useEffect(() => {
+    if (!state.dirty) {
+      clearPersisted()
+      return
+    }
+    const { seasonName, startDate, rules, spirits, ultimates, targetIdx, seasonId } = state
+    savePersisted({ seasonName, startDate, rules, spirits, ultimates, targetIdx, seasonId })
+  }, [state])
+
   return (
     <StateContext.Provider
       value={{ state, dispatch, maxSpirits: MAX_SPIRITS, maxItemsPerLevel: MAX_ITEMS_PER_LEVEL, editing, setEditing }}

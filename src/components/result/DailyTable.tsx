@@ -34,18 +34,18 @@ export function DailyTable({ result }: { result: SolveResult }) {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold">{t('section_daily')}</h3>
+      <h3 id="daily-heading" className="text-sm font-semibold">{t('section_daily')}</h3>
       <div className="overflow-x-auto -mx-4 px-4">
-        <table className="w-full min-w-[48rem] text-sm border-collapse">
+        <table aria-labelledby="daily-heading" className="w-full min-w-[48rem] text-sm border-collapse">
           <thead>
             <tr className="border-b text-xs text-muted-foreground">
-              <th className="text-left font-medium py-2 pr-2 align-bottom whitespace-nowrap">{t('th_day')}</th>
-              <th className="text-left font-medium py-2 px-2 align-bottom">{t('th_spirit')}</th>
-              <th className="text-left font-medium py-2 px-2 align-bottom">{t('th_event')}</th>
-              <th className="text-right font-medium py-2 px-2 align-bottom whitespace-nowrap">{t('th_candles')}</th>
-              <th className="text-right font-medium py-2 px-2 align-bottom whitespace-nowrap">{t('th_balance')}</th>
-              <th className="text-left font-medium py-2 px-2 align-bottom whitespace-nowrap">{t('th_friendship')}</th>
-              <th className="text-left font-medium py-2 pl-2 align-bottom">{t('th_events')}</th>
+              <th scope="col" className="text-left font-medium py-2 pr-2 align-bottom whitespace-nowrap">{t('th_day')}</th>
+              <th scope="col" className="text-left font-medium py-2 px-2 align-bottom">{t('th_spirit')}</th>
+              <th scope="col" className="text-left font-medium py-2 px-2 align-bottom">{t('th_event')}</th>
+              <th scope="col" className="text-right font-medium py-2 px-2 align-bottom whitespace-nowrap">{t('th_candles')}</th>
+              <th scope="col" className="text-right font-medium py-2 px-2 align-bottom whitespace-nowrap">{t('th_balance')}</th>
+              <th scope="col" className="text-left font-medium py-2 px-2 align-bottom whitespace-nowrap">{t('th_friendship')}</th>
+              <th scope="col" className="text-left font-medium py-2 pl-2 align-bottom">{t('th_events')}</th>
             </tr>
           </thead>
           <tbody>

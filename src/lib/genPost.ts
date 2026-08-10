@@ -1,6 +1,7 @@
 import type { Spirit, Rules } from '@/data/seasons'
-import type { Pick } from './solver'
+import type { SolveResult } from './solver'
 import { addDays, describeOpt } from './helpers'
+import { buildSchedule } from './schedule'
 import { formatDate, getOrdinal } from '@/i18n'
 
 interface GenPostArgs {
@@ -8,7 +9,7 @@ interface GenPostArgs {
   startDate: string
   rules: Rules
   spirits: Spirit[]
-  best: { Ts: number[]; Tmax: number; picks: Pick[]; order: number[] }
+  best: SolveResult['best']
   cumHearts: number[]
   targetIdx: number
   lang: string
@@ -51,37 +52,66 @@ export function genPost({ seasonName, startDate, rules, spirits, best, cumHearts
   const unused = spirits.filter((_, i) => !usedSet.has(i))
   if (unused.length) p += '\n' + t('post_skipped', { names: unused.map(s => s.name).join(', ') }) + '\n'
 
+  // The schedule is read straight off buildSchedule, the same source the daily
+  // breakdown renders. Deriving it separately here is what let the post claim a
+  // spirit was working on a level it had not reached yet.
   p += '\n' + t('post_schedule_header') + '\n```\n'
-  let day = 1, nextUlt = 0, cumDone = 0
-  for (let oi = 0; oi < best.order.length; oi++) {
-    const pi = best.order[oi]
-    const pick = best.picks[pi]
-    const s = pick.strat
-    const nm = spirits[pick.spiritIdx].name
-    const phases: [number, number][] = []
-    for (let li = 0; li < 4; li++) {
-      if (s.opts[li] && s.opts[li].days) phases.push([s.opts[li].lvl, s.opts[li].days])
-    }
-    if (phases.length === 0) {
-      p += t('post_no_invites', { name: nm }) + '\n'
-    } else {
-      for (const ph of phases) {
-        const end = day + ph[1] - 1
-        const dayStr = day === end ? t('post_day_single', { day }) : t('post_day_range', { start: day, end })
-        p += t('post_invite_line', { dayStr, name: nm, d: ph[1], lv: ph[0] }) + '\n'
-        day = end + 1
+  const rows = buildSchedule({ best, cumHearts, targetIdx }, rules)
+  const spiritName = (i: number | null) => (i === null ? '' : spirits[i]?.name ?? '')
+
+  /** A day with nothing but a plain invite folds into a range with its neighbours. */
+  const plainInvite = (r: (typeof rows)[number]) => {
+    const acts = r.steps.filter(s => s.kind !== 'collect')
+    return acts.length === 1 && acts[0].kind === 'invite' &&
+      acts[0].cleared.length === 0 && acts[0].skips.length === 0 && acts[0].ultimates.length === 0
+      ? acts[0]
+      : null
+  }
+
+  for (let i = 0; i < rows.length; i++) {
+    const plain = plainInvite(rows[i])
+    if (plain) {
+      let j = i
+      while (j + 1 < rows.length) {
+        const nxt = plainInvite(rows[j + 1])
+        if (!nxt || nxt.spiritIdx !== plain.spiritIdx || nxt.lvl !== plain.lvl) break
+        j++
+      }
+      // A single day is not a run; collapsing it would only add a stray "x1".
+      if (j > i) {
+        p += t('post_sched_invites', {
+          dayStr: t('post_day_range', { start: rows[i].day, end: rows[j].day }),
+          name: spiritName(plain.spiritIdx), lv: plain.lvl, n: j - i + 1,
+        }) + '\n'
+        i = j
+        continue
       }
     }
-    cumDone++
-    while (nextUlt < cumHearts.length && cumDone >= cumHearts[nextUlt]) {
-      const T = best.Ts[nextUlt]
-      p += t('post_ult_milestone', { ord: ordinal(nextUlt + 1), day: T, date: dayDate(startDate, T, lang) }) + '\n'
-      nextUlt++
+
+    const acts: string[] = []
+    for (const s of rows[i].steps) {
+      if (s.kind === 'collect') continue
+      const who = spiritName(s.spiritIdx)
+      if (s.kind === 'invite') acts.push(t('post_act_invite', { name: who, lv: s.lvl }))
+      else if (s.kind === 'heart') acts.push(t('post_act_heart', { name: who, c: -s.candles }))
+      else acts.push(t('post_act_buy', { name: who, lv: s.lvl, c: -s.candles }))
+      for (const sk of s.skips) acts.push(t('post_act_skip', { lv: sk.lvl, c: sk.cost }))
+      for (const lv of s.cleared) acts.push(t('post_act_cleared', { lv }))
+      if (s.completes) acts.push(t('post_act_complete', { name: who }))
+      for (const u of s.ultimates) {
+        acts.push(t('post_act_ult', {
+          ord: ordinal(u + 1), date: dayDate(startDate, rows[i].day, lang),
+        }))
+      }
     }
-  }
-  if (day <= best.Tmax) {
-    const dayStr = day === best.Tmax ? t('post_day_single', { day }) : t('post_day_range', { start: day, end: best.Tmax })
-    p += t('post_accumulate', { dayStr }) + '\n'
+    if (acts.length === 0) {
+      p += t('post_accumulate', { dayStr: t('post_day_single', { day: rows[i].day }) }) + '\n'
+      continue
+    }
+    p += t('post_sched_line', {
+      dayStr: t('post_day_single', { day: rows[i].day }),
+      actions: acts.join(' · '),
+    }) + '\n'
   }
   p += '```\n\n'
   p += t('post_candle_header') + '\n'

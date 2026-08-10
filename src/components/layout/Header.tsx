@@ -11,7 +11,12 @@ export function Header() {
   const { t, lang, setLang, langs } = useI18n()
   const { state, dispatch, editing, setEditing } = useAppState()
   const { theme, setTheme } = useTheme()
-  const [pickerIdx, setPickerIdx] = useState('0')
+  // Start on whichever season the state came from, so a restored edit does not
+  // show the picker pointing at an unrelated season.
+  const [pickerIdx, setPickerIdx] = useState(() => {
+    const i = SEASONS.findIndex(s => s.id === state.seasonId)
+    return String(i >= 0 ? i : 0)
+  })
 
   // Picking a season loads it straight away; re-loading the one already picked
   // is how Reset discards edits.
