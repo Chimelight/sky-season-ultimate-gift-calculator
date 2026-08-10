@@ -3,7 +3,7 @@ import type { SolveResult } from './solver'
 
 const EPS = 1e-9
 
-/** `collect` is the daily map run that banks candles; it opens every day. */
+/** `collect` is the dailies that bank the day's candles; it opens every day. */
 export type StepKind = 'collect' | 'buy' | 'invite' | 'heart'
 
 /** One event. Rows in the breakdown map 1:1 onto these. */
@@ -72,7 +72,7 @@ interface Group {
 
 /**
  * Expand a solved plan into one row per day, each holding the ordered events
- * inside it: the map run that banks candles, then invites and purchases.
+ * inside it: the dailies that bank candles, then invites and purchases.
  *
  * The solver only produces per-spirit totals, so everything about *when* is
  * derived here. Invites are fixed — packed consecutively in plan order, the
@@ -371,7 +371,7 @@ export function buildSchedule(result: SolveResult, rules: Rules): DayRow[] {
   let balance = 0
   for (let d = 1; d <= lastDay; d++) {
     const earned = rules.cpd + (d === 1 ? rules.pass : 0)
-    // The map run opens the day: candles are banked before anything is spent.
+    // The dailies open the day: candles are banked before anything is spent.
     const collect: Step = {
       kind: 'collect',
       day: d,

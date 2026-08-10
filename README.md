@@ -109,8 +109,8 @@ level separately would suggest.
 
 ## Daily Breakdown
 
-The result also expands into a day-by-day event log: the daily map run that banks
-candles, each invite, and each item purchase, with the running candle balance and
+The result also expands into a day-by-day event log: the dailies that bank the
+day's candles, each invite, and each item purchase, with the running balance and
 the spirit's friendship progress after every step. Items are scheduled as early
 as candles allow without delaying any ultimate, so the log doubles as a to-do
 list. Milestones — a level reached, a spirit finished, an ultimate becoming

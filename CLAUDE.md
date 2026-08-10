@@ -39,7 +39,7 @@ React + TypeScript SPA, built with Vite. UI components from shadcn/ui (Radix UI 
 - `src/i18n/en.ts`, `zh-CN.ts`, `bn.ts` — translation objects + ordinal functions per language
 - `src/lib/solver.ts` — `enumSpirit` + `solve`: core algorithm, pure functions, no React dependency
 - `src/lib/genPost.ts` — `genPost`: generates the copyable Discord post string
-- `src/lib/schedule.ts` — `buildSchedule`: expands a solved plan into `DayRow[]`, each holding the ordered `Step[]` for that day (map run / invite / buy / heart, with candles, running balance, friendship progress and milestones); `formatFriendship` trims the fractional values
+- `src/lib/schedule.ts` — `buildSchedule`: expands a solved plan into `DayRow[]`, each holding the ordered `Step[]` for that day (dailies / invite / buy / heart, with candles, running balance, friendship progress and milestones); `formatFriendship` trims the fractional values
 - `src/lib/helpers.ts` — `shortName`, `addDays`, `describeOpt`
 - `src/lib/utils.ts` — `cn()` (clsx + tailwind-merge)
 
@@ -79,7 +79,7 @@ result/DiscordPost.tsx     — copyable Discord post textarea + copy button
 
 **Items per level**: A level holds any number of items up to `maxItemsPerLevel`. The stored array length *is* the slot count — `ADD_SPIRIT_ITEM` appends a `0`, `REMOVE_SPIRIT_ITEM` pops. A `0` means "blank slot", and the solver filters those out before dividing friendship, so a blank never inflates the divisor. Do not re-introduce trailing-blank trimming in `SET_SPIRIT_COST`: it would delete a freshly added slot the moment the user typed in an earlier one.
 
-**Daily breakdown** (`src/lib/schedule.ts`): The solver only produces per-spirit totals, so every question of *when* is derived here. `buildSchedule` emits one `Step` per event — `collect` (the daily map run, which opens every day), `invite`, `buy`, `heart` — grouped into a `DayRow`. `DailyTable` renders one table row per step with the date cell spanning the day.
+**Daily breakdown** (`src/lib/schedule.ts`): The solver only produces per-spirit totals, so every question of *when* is derived here. `buildSchedule` emits one `Step` per event — `collect` (the dailies, which open every day), `invite`, `buy`, `heart` — grouped into a `DayRow`. `DailyTable` renders one table row per step with the date cell spanning the day.
 
 Four rules make the sequence honest; each was a bug before it was a rule, and `npm run check:model` pins all of them:
 

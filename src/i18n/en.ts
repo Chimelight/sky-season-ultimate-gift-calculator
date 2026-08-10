@@ -62,7 +62,7 @@ export const translations = {
   th_event: "Event",
   th_candles: "Candles",
   th_friendship: "Friendship",
-  step_collect: "Map run",
+  step_collect: "Dailies",
   step_invite: "Lv{lv} invite",
   step_gain: "+{gain}",
   step_progress: "{after} / {req}",

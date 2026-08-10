@@ -62,7 +62,7 @@ export const translations = {
   th_event: "事件",
   th_candles: "蜡烛",
   th_friendship: "好感度",
-  step_collect: "跑图",
+  step_collect: "日常",
   step_invite: "{lv} 级 邀请",
   step_gain: "+{gain}",
   step_progress: "{after} / {req}",

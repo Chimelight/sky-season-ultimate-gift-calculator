@@ -62,7 +62,7 @@ export const translations = {
   th_event: "ইভেন্ট",
   th_candles: "মোমবাতি",
   th_friendship: "বন্ধুত্ব",
-  step_collect: "ম্যাপ রান",
+  step_collect: "ডেইলি",
   step_invite: "লেভেল {lv} আমন্ত্রণ",
   step_gain: "+{gain}",
   step_progress: "{after} / {req}",
