@@ -31,6 +31,7 @@ src/
     en.ts, zh-CN.ts, bn.ts  per-language translations + ordinal rules
   lib/
     solver.ts               enumSpirit + solve (pure, no React)
+    schedule.ts             buildSchedule — per-day event log (pure, no React)
     genPost.ts              Discord post string generator
     helpers.ts, utils.ts    shared helpers, cn()
   context/
@@ -41,8 +42,10 @@ src/
     config/SeasonConfig.tsx, RulesCard.tsx
     spirits/SpiritCard.tsx, SpiritsSection.tsx
     ultimates/UltimatesSection.tsx
-    result/ResultSection.tsx, MetricsSummary.tsx, StrategyTable.tsx, TreeMap.tsx, DiscordPost.tsx
-    ui/                     shadcn primitives (button, input, card, badge, select, table, alert, label)
+    result/ResultSection.tsx, MetricsSummary.tsx, StrategyTable.tsx, TreeMap.tsx,
+            DailyTable.tsx, DiscordPost.tsx
+    ui/                     shadcn primitives (button, input, card, badge, select, table,
+                            alert, label) + static-field (read-only stand-in for Input)
 ```
 
 ## Run Locally
@@ -69,10 +72,10 @@ Prepend a new entry to the `SEASONS` array in [`src/data/seasons.ts`](src/data/s
   label: '2026 Season of Example',  // shown in the picker dropdown
   seasonName: 'Season of Example',  // shown in page title and copy post
   startDate: 'YYYY-MM-DD',          // Day 1 of the season
-  rules: { cpd, pass, heart, l1f, l1h, l2f, l2h, l3f, l3h, l4f, l4h },
+  rules: { cpd, pass, heart, l1f, l2f, l3f, l4f },  // l*f = friendship per level
   spirits: [
-    { name: 'Spirit Name', levels: [[cost], [cost, cost], [cost, cost], [cost]] },
-    // … up to 6 spirits
+    { name: 'Spirit Name', levels: [[cost], [cost, cost], [cost, cost, cost], [cost]] },
+    // … up to 6 spirits; a level may hold any number of items
   ],
   ultimates: [{ hearts: N } /* … */],  // one entry per ultimate gift
   targetIdx: 0,                        // default-targeted ultimate
@@ -80,6 +83,38 @@ Prepend a new entry to the `SEASONS` array in [`src/data/seasons.ts`](src/data/s
 ```
 
 The season picker and default state pick it up automatically — no other changes needed.
+
+## Friendship Model
+
+A spirit advances on friendship, which never resets, so level thresholds are
+cumulative. Friendship has two interchangeable sources, and you choose the mix:
+
+- **Unlocking items** — a level worth `l*f` friendship splits it evenly across
+  its items, so each of `m` items pays `l*f / m`. Costs candles.
+- **Daily invites** — 1 point per day, once per day. Costs days.
+
+Neither source is primary; the two substitute for each other, and their relative
+cost varies from node to node. The solver enumerates the buy/skip combinations
+per spirit, discards the Pareto-dominated ones, and selects the plan that
+reaches the target ultimate soonest.
+
+A level with 3 items pays `8 / 3` each, which does not divide evenly. Invites
+only come in whole days, so a shortfall rounds up — but the leftover fraction
+carries into later levels rather than being discarded. Two levels that each
+leave a `2/3` deficit cost 6 invite days together, not the 7 that rounding each
+level separately would suggest.
+
+`npm run check:model` asserts these rules, including the binary-float case where
+`3 * (8/3)` lands just under 8.
+
+## Daily Breakdown
+
+The result also expands into a day-by-day event log: the daily map run that banks
+candles, each invite, and each item purchase, with the running candle balance and
+the spirit's friendship progress after every step. Items are scheduled as early
+as candles allow without delaying any ultimate, so the log doubles as a to-do
+list. Milestones — a level reached, a spirit finished, an ultimate becoming
+claimable — are badged inline.
 
 ## Internationalization
 

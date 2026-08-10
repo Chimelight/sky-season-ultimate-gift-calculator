@@ -5,17 +5,23 @@ import type { SolveResult, LevelOpt } from '@/lib/solver'
 
 function StratBadge({ opt }: { opt: LevelOpt | undefined }) {
   const { t } = useI18n()
-  if (!opt || (opt.k === 'none' && opt.buys.length === 0)) return <span className="text-muted-foreground">—</span>
-  if (opt.k === 'buy' || opt.k === 'both') {
-    return <Badge variant="buy">{t('badge_buy', { c: opt.buys.join('+') })}</Badge>
-  }
-  if (opt.k === 'skip' || opt.k === 'skipboth') {
-    return <Badge variant="skip">{t('badge_skip', { d: opt.days })}</Badge>
-  }
+  if (!opt || opt.k === 'none') return <span className="text-muted-foreground">—</span>
+
+  const buy = opt.buys.length > 0
+    ? <Badge variant="buy">{t('badge_buy', { c: opt.buys.join('+') })}</Badge>
+    : null
+  // A skipped level can still cost 0 days once carried-over friendship covers
+  // it; label it by what was given up rather than by a misleading "0D".
+  const skip = opt.skips.length > 0
+    ? <Badge variant="skip">{opt.days > 0 ? t('badge_skip', { d: opt.days }) : t('badge_skip_free')}</Badge>
+    : null
+
+  if (buy && !skip) return buy
+  if (skip && !buy) return skip
   return (
     <div className="flex flex-row flex-wrap gap-0.5 items-center justify-center">
-      <Badge variant="buy">{t('badge_buy', { c: opt.buys.join('+') })}</Badge>
-      <Badge variant="skip">{t('badge_skip', { d: opt.days })}</Badge>
+      {buy}
+      {skip}
     </div>
   )
 }

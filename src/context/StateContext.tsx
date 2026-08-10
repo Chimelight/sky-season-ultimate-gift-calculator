@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, type ReactNode } from 'react'
+import { createContext, useContext, useReducer, useState, type ReactNode } from 'react'
 import { SEASONS, type Spirit, type Ultimate, type Rules, type Season } from '@/data/seasons'
 
 export interface AppState {
@@ -25,7 +25,7 @@ function defaultState(): AppState {
   return SEASONS.length > 0 ? cloneSeason(SEASONS[0]) : {
     seasonName: 'Season',
     startDate: new Date().toISOString().slice(0, 10),
-    rules: { cpd: 6, pass: 30, heart: 3, l1f: 4, l1h: 2, l2f: 6, l2h: 3, l3f: 8, l3h: 4, l4f: 10, l4h: 5 },
+    rules: { cpd: 6, pass: 30, heart: 3, l1f: 4, l2f: 6, l3f: 8, l4f: 10 },
     spirits: [{ name: 'Spirit 1', levels: [[4], [19, 7], [24, 10], [28]] }],
     ultimates: [{ hearts: 2 }],
     targetIdx: 0,
@@ -38,6 +38,8 @@ type Action =
   | { type: 'SET_RULE'; key: keyof Rules; value: number }
   | { type: 'SET_SPIRIT_NAME'; idx: number; value: string }
   | { type: 'SET_SPIRIT_COST'; spiritIdx: number; lvl: number; pos: number; value: string }
+  | { type: 'ADD_SPIRIT_ITEM'; spiritIdx: number; lvl: number }
+  | { type: 'REMOVE_SPIRIT_ITEM'; spiritIdx: number; lvl: number }
   | { type: 'ADD_SPIRIT'; defaultLevels: number[][] }
   | { type: 'REMOVE_SPIRIT'; idx: number }
   | { type: 'SET_ULTIMATE_HEARTS'; idx: number; value: number }
@@ -47,6 +49,7 @@ type Action =
   | { type: 'LOAD_SEASON'; season: Season }
 
 const MAX_SPIRITS = 6
+const MAX_ITEMS_PER_LEVEL = 4
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -60,15 +63,28 @@ function reducer(state: AppState, action: Action): AppState {
     case 'SET_SPIRIT_COST': {
       const spirits = state.spirits.map((sp, i) => {
         if (i !== action.spiritIdx) return sp
-        const cur = sp.levels[action.lvl] || []
-        let newLvl: number[]
-        if (action.pos === 0) {
-          newLvl = action.value === '' ? cur.slice(1) : [+action.value || 0, ...cur.slice(1)]
-        } else {
-          newLvl = action.value === '' ? cur.slice(0, 1) : [(cur[0] ?? 0), +action.value || 0]
-        }
+        // Array length is the slot count, managed explicitly via
+        // ADD/REMOVE_SPIRIT_ITEM. A 0 here just means the slot is blank; the
+        // solver filters those out before dividing friendship by item count.
+        const newLvl = (sp.levels[action.lvl] || []).slice()
+        while (newLvl.length <= action.pos) newLvl.push(0)
+        newLvl[action.pos] = action.value === '' ? 0 : +action.value || 0
         const levels = sp.levels.map((l, li) => li === action.lvl ? newLvl : l)
         return { ...sp, levels }
+      })
+      return { ...state, spirits }
+    }
+    case 'ADD_SPIRIT_ITEM':
+    case 'REMOVE_SPIRIT_ITEM': {
+      const spirits = state.spirits.map((sp, i) => {
+        if (i !== action.spiritIdx) return sp
+        const cur = sp.levels[action.lvl] || []
+        if (action.type === 'ADD_SPIRIT_ITEM' && cur.length >= MAX_ITEMS_PER_LEVEL) return sp
+        if (action.type === 'REMOVE_SPIRIT_ITEM' && cur.length <= 1) return sp
+        // A new slot starts at 0 so it reads as empty and stays out of the
+        // item count the solver divides friendship by until it is filled in.
+        const next = action.type === 'ADD_SPIRIT_ITEM' ? [...cur, 0] : cur.slice(0, -1)
+        return { ...sp, levels: sp.levels.map((l, li) => li === action.lvl ? next : l) }
       })
       return { ...state, spirits }
     }
@@ -111,14 +127,21 @@ interface StateContextValue {
   state: AppState
   dispatch: React.Dispatch<Action>
   maxSpirits: number
+  maxItemsPerLevel: number
+  /** Season data is presented read-only until the user opts into editing. */
+  editing: boolean
+  setEditing: (v: boolean) => void
 }
 
 const StateContext = createContext<StateContextValue | null>(null)
 
 export function StateProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, defaultState)
+  const [editing, setEditing] = useState(false)
   return (
-    <StateContext.Provider value={{ state, dispatch, maxSpirits: MAX_SPIRITS }}>
+    <StateContext.Provider
+      value={{ state, dispatch, maxSpirits: MAX_SPIRITS, maxItemsPerLevel: MAX_ITEMS_PER_LEVEL, editing, setEditing }}
+    >
       {children}
     </StateContext.Provider>
   )

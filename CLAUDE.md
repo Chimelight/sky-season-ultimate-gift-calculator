@@ -15,6 +15,12 @@ Build for production:
 npm run build
 ```
 
+Checks:
+```bash
+npm run check:model       # friendship/day arithmetic in src/lib/solver.ts
+npm run check:responsive  # viewport × language layout regression (needs Playwright browsers)
+```
+
 ## Architecture
 
 React + TypeScript SPA, built with Vite. UI components from shadcn/ui (Radix UI + Tailwind CSS). Theme switching via next-themes.
@@ -33,27 +39,29 @@ React + TypeScript SPA, built with Vite. UI components from shadcn/ui (Radix UI 
 - `src/i18n/en.ts`, `zh-CN.ts`, `bn.ts` — translation objects + ordinal functions per language
 - `src/lib/solver.ts` — `enumSpirit` + `solve`: core algorithm, pure functions, no React dependency
 - `src/lib/genPost.ts` — `genPost`: generates the copyable Discord post string
+- `src/lib/schedule.ts` — `buildSchedule`: expands a solved plan into `DayRow[]`, each holding the ordered `Step[]` for that day (map run / invite / buy / heart, with candles, running balance, friendship progress and milestones); `formatFriendship` trims the fractional values
 - `src/lib/helpers.ts` — `shortName`, `addDays`, `describeOpt`
 - `src/lib/utils.ts` — `cn()` (clsx + tailwind-merge)
 
 ### State (`src/context/`)
 
-- `src/context/StateContext.tsx` — `useAppState()` hook; `useReducer` manages `AppState` (seasonName, startDate, rules, spirits[], ultimates[], targetIdx). `dispatch` actions: `SET_SEASON_NAME`, `SET_START_DATE`, `SET_RULE`, `SET_SPIRIT_NAME`, `SET_SPIRIT_COST`, `ADD_SPIRIT`, `REMOVE_SPIRIT`, `SET_ULTIMATE_HEARTS`, `ADD_ULTIMATE`, `REMOVE_ULTIMATE`, `SET_TARGET_IDX`, `LOAD_SEASON`
+- `src/context/StateContext.tsx` — `useAppState()` hook; `useReducer` manages `AppState` (seasonName, startDate, rules, spirits[], ultimates[], targetIdx). `dispatch` actions: `SET_SEASON_NAME`, `SET_START_DATE`, `SET_RULE`, `SET_SPIRIT_NAME`, `SET_SPIRIT_COST`, `ADD_SPIRIT_ITEM`, `REMOVE_SPIRIT_ITEM`, `ADD_SPIRIT`, `REMOVE_SPIRIT`, `SET_ULTIMATE_HEARTS`, `ADD_ULTIMATE`, `REMOVE_ULTIMATE`, `SET_TARGET_IDX`, `LOAD_SEASON`. Also exposes `editing` / `setEditing` (see Edit Mode) and the `maxSpirits` / `maxItemsPerLevel` caps.
 - `src/context/I18nContext.tsx` — `useI18n()` hook; exposes `t()`, `setLang()`, `lang`, `ordinal()`, `formatDate()`, `langs`
 
 ### Components (`src/components/`)
 
 ```
-layout/Header.tsx          — sticky header: title, lang select, theme toggle, GitHub link
-config/SeasonConfig.tsx    — season name + start date inputs
-config/RulesCard.tsx       — cpd/pass/heart inputs + skip-days table + season picker/load
-spirits/SpiritCard.tsx     — single spirit card (name + 4-level cost inputs)
+layout/Header.tsx          — sticky header + toolbar: title, season picker, Reset (edit mode only), Edit/Done toggle, lang select, theme toggle, GitHub link
+config/SeasonConfig.tsx    — season name + start date
+config/RulesCard.tsx       — cpd/pass/heart + friendship-per-level
+spirits/SpiritCard.tsx     — single spirit card; levels run Lv4→Lv1 to match the tree map, per-level +/− in edit mode
 spirits/SpiritsSection.tsx — spirit grid + add button
 ultimates/UltimatesSection.tsx — ultimate list + summary
 result/ResultSection.tsx   — runs solve(), distributes result to sub-components
 result/MetricsSummary.tsx  — Day/Candle metric cards
 result/StrategyTable.tsx   — per-spirit Lv1–4 strategy table with Buy/Skip badges
 result/TreeMap.tsx         — SVG tree map (bottom-up, used spirits only)
+result/DailyTable.tsx      — one row per event from buildSchedule(), date cell spans the day, milestone badges
 result/DiscordPost.tsx     — copyable Discord post textarea + copy button
 ```
 
@@ -61,7 +69,26 @@ result/DiscordPost.tsx     — copyable Discord post textarea + copy button
 
 `button`, `input`, `label`, `card`, `badge`, `select`, `table`, `alert` — all hand-scaffolded following shadcn patterns.
 
-**Core algorithm** (`src/lib/solver.ts`): For each spirit, `enumSpirit` enumerates all buy/skip combinations across 4 levels and prunes Pareto-dominated strategies (cost vs. skip-days). `solve` combines per-spirit strategies to find the globally optimal plan given a candle budget and target ultimate.
+**Core algorithm** (`src/lib/solver.ts`): For each spirit, `enumSpirit` enumerates all buy/skip combinations across 4 levels and prunes Pareto-dominated strategies (cost vs. invite days). `solve` combines per-spirit strategies to find the globally optimal plan given a candle budget and target ultimate.
+
+**Friendship model**: Friendship has two interchangeable sources — buying items (spends candles) and daily invites (spends days) — and selecting the mix is the optimization this app performs. A level is worth `rules.l{n}f` friendship, split evenly across however many items it holds (so 3 items pay `8/3` each); invites pay 1/day. Do not describe invites as "filling the gap left by items": neither source is primary, and that framing misstates the problem. Friendship never resets, so thresholds are cumulative and fractional surplus carries into later levels — invite days come from a running maximum over the per-level deficits, *not* a per-level sum. `LevelOpt.days` is the increment attributed to that level, which is why the increments still add up to `Strategy.days`. A level may hold any number of items; there is no half/full-skip special case. Guard the arithmetic with `npm run check:model` — it covers the fractional carry and the `3 * (8/3) === 7.999…` float trap.
+
+**Edit Mode**: Season data is read-only on load — a first-time user should read a plan, not face a wall of inputs. `editing` (in `StateContext`) gates every config control: SeasonConfig, RulesCard, spirit cards, ultimate heart counts, and the add/remove buttons all swap between `Input` and `StaticField` (`src/components/ui/static-field.tsx`, which matches the `h-8` control height so toggling does not reflow). The "prioritize" radio in UltimatesSection stays live in both modes — it selects which result to optimize for, so it is a query, not season data.
+
+**Header toolbar**: The season picker loads on change — there is no separate load button; `loadSeason()` sets the picker index and dispatches `LOAD_SEASON` together. Reset re-dispatches `LOAD_SEASON` for the *already-selected* index, which is what makes it discard edits without changing season. It only renders in edit mode, since outside it there is nothing to discard.
+
+**Items per level**: A level holds any number of items up to `maxItemsPerLevel`. The stored array length *is* the slot count — `ADD_SPIRIT_ITEM` appends a `0`, `REMOVE_SPIRIT_ITEM` pops. A `0` means "blank slot", and the solver filters those out before dividing friendship, so a blank never inflates the divisor. Do not re-introduce trailing-blank trimming in `SET_SPIRIT_COST`: it would delete a freshly added slot the moment the user typed in an earlier one.
+
+**Daily breakdown** (`src/lib/schedule.ts`): The solver only produces per-spirit totals, so every question of *when* is derived here. `buildSchedule` emits one `Step` per event — `collect` (the daily map run, which opens every day), `invite`, `buy`, `heart` — grouped into a `DayRow`. `DailyTable` renders one table row per step with the date cell spanning the day.
+
+Four rules make the sequence honest; each was a bug before it was a rule, and `npm run check:model` pins all of them:
+
+1. **Buy as early as possible.** Owning an item sooner is strictly better, so each purchase group is pinned to its deadline first — a baseline that is feasible because it is what the solver costed — then pulled back to the earliest reachable, affordable day. Pulling a group only raises spend between its new day and its old one, so checking that window proves nothing else must move and no ultimate can slip.
+2. **Deadline-bound items outrank tails.** A tail (anything past a spirit's last invite phase, including the Lv5 heart) only needs to exist by the ultimate it gates; an item with invites still ahead of it must exist *before* them. A tail's deadline is its gating ultimate's day, not the spirit's own earliest finish — otherwise it reserves candles a later spirit's items could be using.
+3. **A level's items are due by the end of the spirit's whole invite block**, not its own phase. The running-max that sets the day count binds at the deepest level and every item below feeds it; pinning per phase is tighter than the plan requires and makes the baseline unaffordable.
+4. **Invites are labelled by the level the spirit has actually reached**, computed from friendship — never the solver's phase. Candles do run out, and an item can genuinely settle after the invites it was meant to precede; a phase label would then name a level the spirit is not on.
+
+Do not attribute a spirit's whole cost to its completion day. It reads plausibly and the totals still balance, but the friendship column then implies purchases the spend column says never happened.
 
 **Adding a season**: Prepend a new entry to `SEASONS` in `src/data/seasons.ts`. The season picker and default state pick it up automatically.
 

@@ -6,6 +6,7 @@ import { solve } from '@/lib/solver'
 import { MetricsSummary } from './MetricsSummary'
 import { StrategyTable } from './StrategyTable'
 import { TreeMap } from './TreeMap'
+import { DailyTable } from './DailyTable'
 import { DiscordPost } from './DiscordPost'
 
 export function ResultSection() {
@@ -33,6 +34,7 @@ export function ResultSection() {
       <MetricsSummary result={result} />
       <StrategyTable result={result} />
       <TreeMap result={result} />
+      <DailyTable result={result} />
       <DiscordPost result={result} />
     </div>
   )

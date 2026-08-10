@@ -8,7 +8,7 @@ import { useAppState } from '@/context/StateContext'
 
 export function UltimatesSection() {
   const { t, ordinal } = useI18n()
-  const { state, dispatch } = useAppState()
+  const { state, dispatch, editing } = useAppState()
 
   let acc = 0
   const cumHearts = state.ultimates.map(u => (acc += Math.max(0, u.hearts || 0)))
@@ -19,15 +19,17 @@ export function UltimatesSection() {
     <section className="space-y-3 [container-type:inline-size]">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-sm font-semibold tracking-tight min-w-0 wrap-anywhere">{t('section_ultimates')}</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 text-xs gap-1"
-          onClick={() => dispatch({ type: 'ADD_ULTIMATE' })}
-        >
-          <Plus className="h-3 w-3" />
-          {t('btn_add_ult')}
-        </Button>
+        {editing && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs gap-1"
+            onClick={() => dispatch({ type: 'ADD_ULTIMATE' })}
+          >
+            <Plus className="h-3 w-3" />
+            {t('btn_add_ult')}
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -39,16 +41,20 @@ export function UltimatesSection() {
                   {t('ult_nth', { ord: ordinal(idx + 1) })}
                 </span>
                 <div className="flex items-center flex-wrap gap-x-3 gap-y-1.5">
-                  <div className="flex items-center gap-2 whitespace-nowrap">
-                    <span className="text-sm text-muted-foreground">+</span>
-                    <Input
-                      type="number"
-                      className="h-8 w-[6ch] min-w-[5ch] text-sm text-center"
-                      value={u.hearts || ''}
-                      min={0}
-                      onChange={e => dispatch({ type: 'SET_ULTIMATE_HEARTS', idx, value: +e.target.value || 0 })}
-                    />
-                    <span className="text-xs text-muted-foreground">{t('ult_season_hearts')}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground shrink-0">+</span>
+                    {editing ? (
+                      <Input
+                        type="number"
+                        className="h-8 w-[6ch] min-w-[5ch] text-sm text-center shrink-0"
+                        value={u.hearts || ''}
+                        min={0}
+                        onChange={e => dispatch({ type: 'SET_ULTIMATE_HEARTS', idx, value: +e.target.value || 0 })}
+                      />
+                    ) : (
+                      <span className="text-sm font-medium tabular-nums shrink-0">{u.hearts}</span>
+                    )}
+                    <span className="text-xs text-muted-foreground min-w-0 wrap-anywhere">{t('ult_season_hearts')}</span>
                   </div>
                   <label className="flex items-center gap-1.5 cursor-pointer text-xs whitespace-nowrap">
                     <input
@@ -61,7 +67,7 @@ export function UltimatesSection() {
                     {t('ult_prioritize')}
                   </label>
                   <div className="ml-auto">
-                    {state.ultimates.length > 1 && (
+                    {editing && state.ultimates.length > 1 && (
                       <Button
                         variant="ghost"
                         size="icon"

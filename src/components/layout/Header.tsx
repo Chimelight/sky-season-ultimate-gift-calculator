@@ -1,14 +1,24 @@
-import { Moon, Sun, Github } from 'lucide-react'
+import { Moon, Sun, Github, Pencil, Check, RotateCcw } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useI18n } from '@/context/I18nContext'
 import { useAppState } from '@/context/StateContext'
+import { SEASONS } from '@/data/seasons'
+import { useState } from 'react'
 
 export function Header() {
   const { t, lang, setLang, langs } = useI18n()
-  const { state } = useAppState()
+  const { state, dispatch, editing, setEditing } = useAppState()
   const { theme, setTheme } = useTheme()
+  const [pickerIdx, setPickerIdx] = useState('0')
+
+  // Picking a season loads it straight away; re-loading the one already picked
+  // is how Reset discards edits.
+  function loadSeason(idx: string) {
+    setPickerIdx(idx)
+    dispatch({ type: 'LOAD_SEASON', season: SEASONS[+idx] })
+  }
 
   const title = t('page_title', { name: state.seasonName || t('season_fallback') })
 
@@ -19,7 +29,40 @@ export function Header() {
           <h1 className="text-lg font-semibold leading-tight tracking-tight wrap-anywhere break-words">{title}</h1>
           <p className="text-xs text-muted-foreground mt-0.5 hidden @[28rem]:block">{t('subtitle')}</p>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+        <div className="flex items-center justify-end gap-1.5 flex-wrap min-w-0">
+          {SEASONS.length > 1 && (
+            <Select value={pickerIdx} onValueChange={loadSeason}>
+              <SelectTrigger className="h-8 w-auto min-w-0 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SEASONS.map((s, i) => (
+                  <SelectItem key={s.id} value={String(i)}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {editing && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              title={t('btn_reset_hint')}
+              onClick={() => loadSeason(pickerIdx)}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              {t('btn_reset')}
+            </Button>
+          )}
+          <Button
+            variant={editing ? 'default' : 'outline'}
+            size="sm"
+            className="h-8 text-xs gap-1.5"
+            onClick={() => setEditing(!editing)}
+          >
+            {editing ? <Check className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
+            {editing ? t('btn_done_editing') : t('btn_edit_data')}
+          </Button>
           <Select value={lang} onValueChange={setLang}>
             <SelectTrigger className="h-8 w-auto text-xs">
               <SelectValue />

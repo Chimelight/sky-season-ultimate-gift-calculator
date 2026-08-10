@@ -5,7 +5,7 @@ export interface LevelOpt {
   days: number
   buys: number[]
   skips: number[]
-  k: 'none' | 'buy' | 'both' | 'cheap' | 'exp' | 'skip' | 'skipboth'
+  k: 'none' | 'all' | 'some' | 'skipall'
   lvl: number
 }
 
@@ -36,39 +36,99 @@ export interface SolveError {
   error: string
 }
 
-export function enumSpirit(spirit: Spirit, rules: Rules): Strategy[] {
-  const lvlOpts: LevelOpt[][] = []
+interface LevelInfo {
+  items: number[]
+  req: number
+}
+
+// Friendship arrives in exact thirds when a level holds 3 items, so binary
+// floats undershoot: 3 * (8/3) === 7.999999999999999. Without the tolerance a
+// fully-bought level would demand a phantom invite day.
+const EPS = 1e-9
+
+function ceilDays(x: number): number {
+  return Math.max(0, Math.ceil(x - EPS))
+}
+
+function levelInfos(spirit: Spirit, rules: Rules): LevelInfo[] {
+  const out: LevelInfo[] = []
   for (let i = 0; i < 4; i++) {
-    const items = (spirit.levels[i] || []).filter(x => x !== undefined && x !== null && !isNaN(x) && x !== 0)
-    const fk = rules[('l' + (i + 1) + 'f') as keyof Rules] as number
-    const hk = rules[('l' + (i + 1) + 'h') as keyof Rules] as number
+    const items = (spirit.levels[i] || [])
+      .filter(x => x !== undefined && x !== null && !isNaN(x) && x !== 0)
+      .sort((a, b) => a - b)
+    out.push({ items, req: rules[('l' + (i + 1) + 'f') as keyof Rules] as number })
+  }
+  return out
+}
+
+/**
+ * Walk the four levels accumulating exact friendship, and attribute invite days
+ * to the level that forces them.
+ *
+ * A level worth `req` friendship splits it evenly across its items, so buying
+ * `b` of `m` yields `b * req / m`. Invites add 1/day. Friendship never resets,
+ * so the thresholds are cumulative and any fractional surplus rolls forward —
+ * which is why days are derived from a running maximum here rather than summed
+ * per level.
+ */
+function buildStrategy(levels: LevelInfo[], counts: number[], rules: Rules): Strategy {
+  let cost = rules.heart
+  let friend = 0
+  let cumReq = 0
+  let prevDays = 0
+  const opts: LevelOpt[] = []
+
+  for (let i = 0; i < 4; i++) {
+    const { items, req } = levels[i]
+    const lvl = i + 1
     if (items.length === 0) {
-      lvlOpts.push([{ cost: 0, days: 0, buys: [], skips: [], k: 'none', lvl: i + 1 }])
-    } else if (items.length === 1) {
-      const c = items[0]
-      lvlOpts.push([
-        { cost: c, days: 0, buys: [c], skips: [], k: 'buy', lvl: i + 1 },
-        { cost: 0, days: fk, buys: [], skips: [c], k: 'skip', lvl: i + 1 },
-      ])
-    } else {
-      const sorted = items.slice(0, 2).sort((a, b) => b - a)
-      const exp = sorted[0], cheap = sorted[1]
-      lvlOpts.push([
-        { cost: exp + cheap, days: 0, buys: [exp, cheap], skips: [], k: 'both', lvl: i + 1 },
-        { cost: cheap, days: hk, buys: [cheap], skips: [exp], k: 'cheap', lvl: i + 1 },
-        { cost: exp, days: hk, buys: [exp], skips: [cheap], k: 'exp', lvl: i + 1 },
-        { cost: 0, days: fk, buys: [], skips: [exp, cheap], k: 'skipboth', lvl: i + 1 },
-      ])
+      opts.push({ cost: 0, days: 0, buys: [], skips: [], k: 'none', lvl })
+      continue
+    }
+    const b = counts[i]
+    const buys = items.slice(0, b)
+    const skips = items.slice(b)
+    const levelCost = buys.reduce((s, c) => s + c, 0)
+
+    cost += levelCost
+    cumReq += req
+    friend += (b * req) / items.length
+
+    const totalDays = Math.max(prevDays, ceilDays(cumReq - friend))
+    opts.push({
+      cost: levelCost,
+      days: totalDays - prevDays,
+      buys,
+      skips,
+      k: skips.length === 0 ? 'all' : buys.length === 0 ? 'skipall' : 'some',
+      lvl,
+    })
+    prevDays = totalDays
+  }
+
+  return { cost, days: prevDays, opts }
+}
+
+export function enumSpirit(spirit: Spirit, rules: Rules): Strategy[] {
+  const levels = levelInfos(spirit, rules)
+  const strats: Strategy[] = []
+  const counts: number[] = []
+
+  // Friendship depends only on how many items a level gives up, so for each
+  // count the cheapest items are always the ones worth buying.
+  function rec(i: number) {
+    if (i === 4) {
+      strats.push(buildStrategy(levels, counts, rules))
+      return
+    }
+    for (let b = 0; b <= levels[i].items.length; b++) {
+      counts.push(b)
+      rec(i + 1)
+      counts.pop()
     }
   }
-  let strats: Strategy[] = [{ cost: rules.heart, days: 0, opts: [] }]
-  for (let i = 0; i < 4; i++) {
-    const next: Strategy[] = []
-    for (const s of strats) for (const o of lvlOpts[i]) {
-      next.push({ cost: s.cost + o.cost, days: s.days + o.days, opts: s.opts.concat([o]) })
-    }
-    strats = next
-  }
+  rec(0)
+
   return strats.filter(s => !strats.some(x => x !== s && x.cost <= s.cost && x.days <= s.days && (x.cost < s.cost || x.days < s.days)))
 }
 

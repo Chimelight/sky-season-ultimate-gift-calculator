@@ -2,10 +2,15 @@ export interface Rules {
   cpd: number
   pass: number
   heart: number
-  l1f: number; l1h: number
-  l2f: number; l2h: number
-  l3f: number; l3h: number
-  l4f: number; l4h: number
+  /**
+   * Friendship each level is worth. A level splits this evenly across its
+   * items; invites make up whatever the items don't cover, at 1 per day. So
+   * these double as the days needed to skip a level outright.
+   */
+  l1f: number
+  l2f: number
+  l3f: number
+  l4f: number
 }
 
 export interface Spirit {
@@ -30,11 +35,26 @@ export interface Season {
 
 export const SEASONS: Season[] = [
   {
+    id: 'season-of-dear-van-gogh',
+    label: '2026 Dear Van Gogh',
+    seasonName: 'Dear Van Gogh',
+    startDate: '2026-07-17',
+    rules: { cpd:6, pass:30, heart:3, l1f:4, l2f:6, l3f:8, l4f:10 },
+    spirits: [
+      { name: 'Dutch Memory',    levels: [[4],  [18, 6], [22, 10],     [26]] },
+      { name: 'Rustic Memory',   levels: [[4],  [18, 8], [22, 8],      [26]] },
+      { name: 'Artistic Memory', levels: [[12], [18, 6], [22, 22, 10], [10]] },
+      { name: 'Joyful Memory',   levels: [[12], [6],     [22, 22, 8],  [26, 12]] },
+    ],
+    ultimates: [{ hearts: 1 }, { hearts: 2 }, { hearts: 1 }],
+    targetIdx: 2,
+  },
+  {
     id: 'season-of-carnival',
     label: '2026 Season of Carnival',
     seasonName: 'Season of Carnival',
     startDate: '2026-04-17',
-    rules: { cpd:6, pass:30, heart:3, l1f:4, l1h:2, l2f:6, l2h:3, l3f:8, l3h:4, l4f:10, l4h:5 },
+    rules: { cpd:6, pass:30, heart:3, l1f:4, l2f:6, l3f:8, l4f:10 },
     spirits: [
       { name: 'Juggler',         levels: [[4], [19, 7], [24, 10], [28]] },
       { name: 'Athletic Dancer', levels: [[4], [19, 7], [24, 12], [28]] },
@@ -49,7 +69,7 @@ export const SEASONS: Season[] = [
     label: '2026 Season of Lightmending',
     seasonName: 'Season of Lightmending',
     startDate: '2026-01-16',
-    rules: { cpd:6, pass:30, heart:3, l1f:4, l1h:2, l2f:6, l2h:3, l3f:8, l3h:4, l4f:10, l4h:5 },
+    rules: { cpd:6, pass:30, heart:3, l1f:4, l2f:6, l3f:8, l4f:10 },
     spirits: [
       { name: 'Pioneer',       levels: [[4], [6],      [28, 30], [15]] },
       { name: 'Champion',      levels: [[4], [25, 6],  [28, 9],  [15]] },
@@ -64,7 +84,7 @@ export const SEASONS: Season[] = [
     label: '2025 Season of Migration',
     seasonName: 'Season of Migration',
     startDate: '2025-10-20',
-    rules: { cpd:6, pass:30, heart:3, l1f:4, l1h:2, l2f:6, l2h:3, l3f:8, l3h:4, l4f:10, l4h:5 },
+    rules: { cpd:6, pass:30, heart:3, l1f:4, l2f:6, l3f:8, l4f:10 },
     spirits: [
       { name: 'Bird Whisperer',     levels: [[2], [4],      [24, 30], [12]] },
       { name: 'Butterfly Charmer',  levels: [[2], [6],      [24, 30], [8]] },

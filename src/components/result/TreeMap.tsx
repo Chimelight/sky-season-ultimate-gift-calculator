@@ -12,7 +12,7 @@ function renderSvg(
   completedMap: Map<number, { orderInPlan: number; strat: Pick['strat'] }>,
   spirits: { name: string }[],
   rules: { heart: number },
-  labels: { lv5: string; lv4: string; lv3: string; lv2: string; lv1: string; heart: (c: number) => string; buyLine: (c: number) => string; skipLine: (c: number, d: number) => string; skipDays: (d: number) => string; buyBoth: (a: number, b: number) => string; skipBothDays: (d: number) => string },
+  labels: { lv5: string; lv4: string; lv3: string; lv2: string; lv1: string; heart: (c: number) => string; buyCell: (c: string) => string; skipCell: (c: string, d: number) => string },
   isDark: boolean
 ): string {
   const usedIdxs = best.order.map(pi => best.picks[pi].spiritIdx)
@@ -53,6 +53,13 @@ function renderSvg(
     const stroke = kind === 'buy' ? buyStroke : skipStroke
     const txt = kind === 'buy' ? buyText : skipText
     const lines = text.split('\n')
+    // A 3-item level yields strings like "10+20+30C" that overrun the column at
+    // the nominal size, so step down until the widest line fits.
+    const widestAt = (size: number) => {
+      ctx.font = `${size}px sans-serif`
+      return Math.max(...lines.map(l => ctx.measureText(l).width))
+    }
+    while (fs > 7 && widestAt(fs) > cw - 6) fs -= 0.5
     let out = `<rect x="${x}" y="${y}" width="${cw}" height="${ch}" rx="5" fill="${fill}" stroke="${stroke}" stroke-opacity="0.6" stroke-width="0.8"/>`
     const lineH = fs * 1.2
     lines.forEach((line, idx) => {
@@ -80,20 +87,19 @@ function renderSvg(
       }
 
       const opt = opts[4 - li]
-      if (!opt || (opt.buys.length === 0 && opt.skips.length === 0 && opt.k === 'none')) continue
+      if (!opt || opt.k === 'none') continue
 
-      if (opt.k === 'cheap' || opt.k === 'exp') {
+      const buyLabel = labels.buyCell(opt.buys.join('+'))
+      const skipLabel = labels.skipCell(opt.skips.join('+'), opt.days)
+
+      if (opt.buys.length && opt.skips.length) {
         const gap = 2, subW = (cw - gap) / 2
-        svg += cell(x, y, subW, ch, 'buy', labels.buyLine(opt.buys[0]), 9)
-        svg += cell(x + subW + gap, y, subW, ch, 'skip', labels.skipLine(opt.skips[0], opt.days), 9)
-      } else if (opt.k === 'buy') {
-        svg += cell(x, y, cw, ch, 'buy', labels.buyLine(opt.buys[0]))
-      } else if (opt.k === 'skip') {
-        svg += cell(x, y, cw, ch, 'skip', labels.skipDays(opt.days))
-      } else if (opt.k === 'both') {
-        svg += cell(x, y, cw, ch, 'buy', labels.buyBoth(opt.buys[0], opt.buys[1]))
-      } else if (opt.k === 'skipboth') {
-        svg += cell(x, y, cw, ch, 'skip', labels.skipBothDays(opt.days))
+        svg += cell(x, y, subW, ch, 'buy', buyLabel, 9)
+        svg += cell(x + subW + gap, y, subW, ch, 'skip', skipLabel, 9)
+      } else if (opt.buys.length) {
+        svg += cell(x, y, cw, ch, 'buy', buyLabel)
+      } else if (opt.skips.length) {
+        svg += cell(x, y, cw, ch, 'skip', skipLabel)
       }
     }
   })
@@ -125,11 +131,8 @@ export function TreeMap({ result }: { result: SolveResult }) {
       {
         lv5: t('svg_lv5'), lv4: t('svg_lv4'), lv3: t('svg_lv3'), lv2: t('svg_lv2'), lv1: t('svg_lv1'),
         heart: (c) => t('svg_heart', { c }),
-        buyLine: (c) => t('svg_buy_line', { c }),
-        skipLine: (c, d) => t('svg_skip_line', { c, d }),
-        skipDays: (d) => t('svg_skip_days', { d }),
-        buyBoth: (a, b) => t('svg_buy_both', { a, b }),
-        skipBothDays: (d) => t('svg_skip_both_days', { d }),
+        buyCell: (c) => t('svg_buy_cell', { c }),
+        skipCell: (c, d) => d > 0 ? t('svg_skip_cell', { c, d }) : t('svg_skip_cell_free', { c }),
       },
       isDark
     )

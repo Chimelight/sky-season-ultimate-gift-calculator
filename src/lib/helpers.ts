@@ -19,11 +19,10 @@ export function describeOpt(
   t: (key: string, vars?: Record<string, string | number>) => string
 ): string | null {
   if (!o || o.k === 'none') return null
-  if (o.k === 'buy') return t('desc_buy', { c: o.buys[0] })
-  if (o.k === 'both') return t('desc_buy_both', { exp: o.buys[0], cheap: o.buys[1] })
-  if (o.k === 'cheap') return t('desc_buy_cheap', { cheap: o.buys[0], exp: o.skips[0], d: o.days })
-  if (o.k === 'exp') return t('desc_buy_exp', { exp: o.buys[0], cheap: o.skips[0], d: o.days })
-  if (o.k === 'skip') return t('desc_skip', { c: o.skips[0], d: o.days })
-  if (o.k === 'skipboth') return t('desc_skip_both', { d: o.days })
-  return null
+  if (o.k === 'all') return t('desc_buy_all', { c: o.buys.join('+') })
+  // Carried-over surplus friendship can cover a skipped level outright, so a
+  // skip does not always cost invite days.
+  const suffix = o.days > 0 ? t('desc_days_suffix', { d: o.days }) : ''
+  if (o.k === 'skipall') return t('desc_skip_all', { c: o.skips.join('+'), suffix })
+  return t('desc_buy_some', { buy: o.buys.join('+'), skip: o.skips.join('+'), suffix })
 }
