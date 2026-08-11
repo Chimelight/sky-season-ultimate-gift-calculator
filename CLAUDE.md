@@ -146,6 +146,7 @@ The chrome is shadcn zinc — use semantic tokens (`text-muted-foreground`, `bor
 
 - **Nothing is hollow, and no glyph carries meaning.** An earlier version used outlined badges with ●/○ dots; the dots were there only because both states shared a lightness. Solid blocks at different densities separate on lightness alone, which already survives greyscale and colour blindness.
 - **Emphasis comes from density, not from going dark.** `solid` is one step denser than `bg` (light: 200 ground / 800 ink; dark: the mirror), *not* a reversed block. A saturated 700 block sitting in a pale tinted row reads as heavy and dirty. Every `solid`/`on` pair still clears 4.5:1 — 5.69–6.47 light, 5.82–7.28 dark.
+- **The dark ramps are not the light ones inverted — their chroma is cut.** Everything carrying text runs at 60% of the light-theme saturation and 93% of the lightness, because high-chroma light text on a dark ground halates and reads as glaring even when every contrast ratio is nominally fine. `bar` keeps more chroma (80%) than the text does: it must stay legible as a *graphic* against both the track and the accrued segment, and cutting it as hard as the text drops that under 3:1. Floors after the cut are text 4.83 and graphics 3.47 — check both before touching a dark value.
 
 Do not reintroduce green=buy / amber=skip — that spends hue on an axis that no longer owns it, and collides with spirits #2 and #3.
 

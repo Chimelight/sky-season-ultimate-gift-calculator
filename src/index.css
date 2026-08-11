@@ -76,14 +76,21 @@
        and fg/bar move up the ramp to stay legible on it.
 
        The emphatic badge stays one step denser than the soft one here too,
-       just in the other direction: a deeper ground carrying brighter ink
-       (5.82–7.28:1). */
-    --s1-bg: #2b1214; --s1-br: #7f1d1d; --s1-fg: #fca5a5; --s1-bar: #f87171; --s1-solid: #7f1d1d;  --s1-on: #fecaca;
-    --s2-bg: #241c08; --s2-br: #78350f; --s2-fg: #fcd34d; --s2-bar: #fbbf24; --s2-solid: #78350f;  --s2-on: #fde68a;
-    --s3-bg: #0c2119; --s3-br: #065f46; --s3-fg: #6ee7b7; --s3-bar: #34d399; --s3-solid: #065f46;  --s3-on: #a7f3d0;
-    --s4-bg: #0b2028; --s4-br: #155e75; --s4-fg: #67e8f9; --s4-bar: #22d3ee; --s4-solid: #155e75;  --s4-on: #a5f3fc;
-    --s5-bg: #131c34; --s5-br: #1e40af; --s5-fg: #93c5fd; --s5-bar: #60a5fa; --s5-solid: #1e40af;  --s5-on: #bfdbfe;
-    --s6-bg: #1d1433; --s6-br: #5b21b6; --s6-fg: #c4b5fd; --s6-bar: #a78bfa; --s6-solid: #5b21b6;  --s6-on: #ddd6fe;
+       just in the other direction: a deeper ground carrying brighter ink.
+
+       Chroma is pulled back hard on everything that carries text — 60% of the
+       light-theme saturation, at 93% of the lightness. High-chroma light text
+       on a dark ground halates, and the page reads as glaring even when every
+       contrast ratio is nominally fine. The bar keeps more chroma (80%) than
+       the text does, because it has to stay legible as a *graphic* against
+       both the track and the accrued segment; cutting it as hard as the text
+       drops that below 3:1. Floors after the cut: text 4.83, graphics 3.47. */
+    --s1-bg: #281516; --s1-br: #7f1d1d; --s1-fg: #e4a0a0; --s1-bar: #ea7e7e; --s1-solid: #7f1d1d;  --s1-on: #edbbbb;
+    --s2-bg: #211b0b; --s2-br: #78350f; --s2-fg: #d4b85e; --s2-bar: #e6b639; --s2-solid: #78350f;  --s2-on: #e0cf8b;
+    --s3-bg: #0e1f19; --s3-br: #065f46; --s3-fg: #75c8a7; --s3-bar: #44c395; --s3-solid: #065f46;  --s3-on: #a1dcc1;
+    --s4-bg: #0e1f25; --s4-br: #155e75; --s4-fg: #71cbd6; --s4-bar: #36c4da; --s4-solid: #155e75;  --s4-on: #a0dde4;
+    --s5-bg: #161d31; --s5-br: #1e40af; --s5-fg: #92b8e2; --s5-bar: #6fa7eb; --s5-solid: #1e40af;  --s5-on: #b3cceb;
+    --s6-bg: #1e1730; --s6-br: #5b21b6; --s6-fg: #b8ace8; --s6-bar: #ac96ef; --s6-solid: #5b21b6;  --s6-on: #ccc4ef;
 
     /* Unchanged: bright yellow on a near-black ground is exactly the one thing
        that should draw the eye first. */
