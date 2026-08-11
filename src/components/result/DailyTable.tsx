@@ -100,13 +100,18 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                       {i === 0 && (
                         <td
                           rowSpan={r.steps.length}
-                          // An ultimate is reached by the *day*, not by the cell
-                          // the badge happens to land in, so the day itself is
-                          // marked. Today wins the rule when they coincide —
-                          // that one answers "where am I", which is why the
-                          // table gets opened — but the date stays gold either
-                          // way, so the milestone is never lost.
-                          className={`py-1 pr-2 align-top whitespace-nowrap border-r ${
+                          // An ultimate is reached by the *day*, not by the step
+                          // whose row its badge happened to land in, so the
+                          // whole marking lives here: gold wash, gold rule, and
+                          // the badge itself. Today wins the rule when the two
+                          // coincide — that is the marker the table gets opened
+                          // for — but the wash and badge stay, so the milestone
+                          // is never lost.
+                          //
+                          // nowrap is on the day and date lines rather than the
+                          // cell, so the badge is free to wrap instead of
+                          // widening this column on every row of the plan.
+                          className={`py-1 pr-2 align-top border-r ${
                             r.ultimates.length > 0 ? 'bg-[var(--ult-day)]' : ''
                           } ${
                             isToday
@@ -116,11 +121,29 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                                 : ''
                           }`}
                         >
-                          <div className="font-medium tabular-nums">{t('day_prefix', { n: r.day })}</div>
-                          <div className="text-xs text-muted-foreground">{dayDate(r.day)}</div>
+                          <div className="font-medium tabular-nums whitespace-nowrap">
+                            {t('day_prefix', { n: r.day })}
+                          </div>
+                          <div className="text-xs text-muted-foreground whitespace-nowrap">{dayDate(r.day)}</div>
                           {isToday && (
                             <Badge variant="default" className="mt-0.5">{t('badge_today')}</Badge>
                           )}
+                          {/* Short form here: the full phrase is what set this
+                              column's width, and the day column pays that on
+                              every row of the plan for something a season hits
+                              two or three times. The full wording stays in the
+                              title, and the gold cell already says "claimable"
+                              in colour. */}
+                          {r.ultimates.map(ui => (
+                            <Badge
+                              key={`u${ui}`}
+                              variant="ult"
+                              className="mt-1"
+                              title={t('badge_ult_ready', { ord: ordinal(ui + 1) })}
+                            >
+                              ★ {t('badge_ult_short', { ord: ordinal(ui + 1) })}
+                            </Badge>
+                          ))}
                         </td>
                       )}
                       {/* A rule down the left edge, on every step of the run, so
@@ -204,11 +227,10 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                           {s.completes && s.spiritIdx !== null && (
                             <Badge variant="milestone">{t('badge_spirit_done', { name: spiritName(s.spiritIdx) })}</Badge>
                           )}
-                          {s.ultimates.map(ui => (
-                            <Badge key={`u${ui}`} variant="ult">
-                              ★ {t('badge_ult_ready', { ord: ordinal(ui + 1) })}
-                            </Badge>
-                          ))}
+                          {/* No ultimate badge here — it belongs to the day, and
+                              lives in the date cell. This column stays for the
+                              milestones that really are per-step: a level
+                              cleared, a spirit finished. */}
                         </div>
                       </td>
                     </tr>

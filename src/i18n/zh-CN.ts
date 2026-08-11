@@ -74,6 +74,7 @@ export const translations = {
   badge_today: "今天",
   badge_spirit_done: "{name} 完成",
   badge_ult_ready: "{ord}毕业礼可领取",
+  badge_ult_short: "{ord}毕业礼",
   note_daily: "每天按实际发生顺序展开。购买物品与每日邀请都会增加好感度，累计达到该等级要求即解锁下一级。蜡烛不足时，购买会顺延到攒够的那天。",
   section_discord: 'Discord 文案',
   btn_copy: '复制',
