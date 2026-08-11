@@ -80,7 +80,7 @@ export const translations = {
   badge_item_heart: "Lv5 heart {c}C",
   badge_pass: "Season Pass +{pass}C",
   badge_today: "Today",
-  badge_spirit_done: "{name} complete",
+  badge_spirit_done: "{name} Complete",
   badge_ult_ready: "{ord} Ultimate claimable",
   // Short form for the date cell, which is otherwise a two-line column
   badge_ult_short: "{ord} Ultimate",
