@@ -170,7 +170,7 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                                 scrolls horizontally if it comes to that. Not
                                 truncation — nothing is hidden. */}
                             {!sameSpirit && (
-                              <span className="text-[var(--sp-fg)] font-semibold whitespace-nowrap">
+                              <span className="text-[var(--sp-fg)] whitespace-nowrap">
                                 {spiritName(s.spiritIdx)}
                               </span>
                             )}
