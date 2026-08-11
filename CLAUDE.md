@@ -142,6 +142,17 @@ The chrome is shadcn zinc — use semantic tokens (`text-muted-foreground`, `bor
 
 **Hue means *which spirit*, never *what happened*.** Six ramps `--s1-*`…`--s6-*` (red, amber, emerald, cyan, blue, violet — round the wheel from red, so no two neighbours collide) cover `MAX_SPIRITS`. Each is a ramp, not a colour: `bg` tints a row and fills the soft badge, `br` outlines it and fills the accrued part of a progress bar, `fg` carries text, `bar` fills what a step just added, `solid`/`on` are the emphatic badge. `spiritClass(idx)` in `src/lib/spiritTheme.ts` returns `spirit-N`, which binds one ramp to the generic `--sp-*` names; every descendant then reads `--sp-*` without knowing which spirit it is. Those `.spirit-N` rules sit **outside `@layer`** deliberately — Tailwind purges class selectors it cannot find in the source, and the names are built as `` `spirit-${n}` `` at runtime, so inside a layer the whole block is stripped and every colour silently resolves to nothing.
 
+**Every badge role must stay separable, because they all share one hue now.** With hue reassigned to spirit identity, nothing is distinguished by colour any more — the burden fell on fill, edge and weight, and two roles quietly collapsed into the buy style before this was noticed. The current set, all reading the ambient `--sp-*`:
+
+| variant | ground | edge | weight | role |
+|---|---|---|---|---|
+| `identity` | `--sp-fg`, reversed text | none | semibold | the `#N` anchor — the one place a fully saturated block belongs, since it is the smallest mark on the page |
+| `buy` | `--sp-solid` | none | semibold | an item bought |
+| `soft` | `--sp-bg` | hairline `--sp-br` | normal | an invite |
+| `skip` | `--sp-bg` | dashed `--sp-fg` | normal | an item given up |
+| `milestone` | `--sp-bg` | solid `--sp-fg` | semibold | a spirit finished |
+| `ult` | `--ult-fill` | none | bold | an ultimate — the loudest thing in the app |
+
 **Buy vs skip is carried by weight, in three steps.** `buy` is the denser block (`solid`/`on`), `soft` the quiet one for the many invite rows, `skip` is soft with a dashed edge for the item given up; the TreeMap says the same with a solid vs dashed stroke. Two rules the variants exist to hold:
 
 - **Nothing is hollow, and no glyph carries meaning.** An earlier version used outlined badges with ●/○ dots; the dots were there only because both states shared a lightness. Solid blocks at different densities separate on lightness alone, which already survives greyscale and colour blindness.

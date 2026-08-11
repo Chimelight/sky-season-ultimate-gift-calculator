@@ -170,7 +170,7 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                             <Badge key={`cl${lv}`} variant="order">{t('step_cleared', { lv })}</Badge>
                           ))}
                           {s.completes && s.spiritIdx !== null && (
-                            <Badge variant="buy">{t('badge_spirit_done', { name: spiritName(s.spiritIdx) })}</Badge>
+                            <Badge variant="milestone">{t('badge_spirit_done', { name: spiritName(s.spiritIdx) })}</Badge>
                           )}
                           {s.ultimates.map(ui => (
                             <Badge key={`u${ui}`} variant="ult">
