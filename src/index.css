@@ -84,13 +84,23 @@
        contrast ratio is nominally fine. The bar keeps more chroma (80%) than
        the text does, because it has to stay legible as a *graphic* against
        both the track and the accrued segment; cutting it as hard as the text
-       drops that below 3:1. Floors after the cut: text 4.83, graphics 3.47. */
-    --s1-bg: #281516; --s1-br: #7f1d1d; --s1-fg: #e4a0a0; --s1-bar: #ea7e7e; --s1-solid: #7f1d1d;  --s1-on: #edbbbb;
-    --s2-bg: #211b0b; --s2-br: #78350f; --s2-fg: #d4b85e; --s2-bar: #e6b639; --s2-solid: #78350f;  --s2-on: #e0cf8b;
-    --s3-bg: #0e1f19; --s3-br: #065f46; --s3-fg: #75c8a7; --s3-bar: #44c395; --s3-solid: #065f46;  --s3-on: #a1dcc1;
-    --s4-bg: #0e1f25; --s4-br: #155e75; --s4-fg: #71cbd6; --s4-bar: #36c4da; --s4-solid: #155e75;  --s4-on: #a0dde4;
-    --s5-bg: #161d31; --s5-br: #1e40af; --s5-fg: #92b8e2; --s5-bar: #6fa7eb; --s5-solid: #1e40af;  --s5-on: #b3cceb;
-    --s6-bg: #1e1730; --s6-br: #5b21b6; --s6-fg: #b8ace8; --s6-bar: #ac96ef; --s6-solid: #5b21b6;  --s6-on: #ccc4ef;
+       drops that below 3:1. Floors after the cut: text 4.83, graphics 3.47.
+
+       bg is cut furthest of all — down to a barely-hued dark band. It is the
+       one token that covers a *large* area, and large chromatic fields are
+       what made this table shimmer: the breakdown alternates untinted Dailies
+       rows with tinted spirit rows, so dozens of coloured bands stack up at a
+       regular pitch, and two spirits' blocks often abut directly. Opponent
+       hues meeting at similar luminance vibrate at the boundary no matter what
+       their contrast ratio says. Chroma belongs on small dense marks — the
+       swatch, the badge, the text, the bar — and those still carry identity
+       here, so the row tint only has to say "this row belongs to a spirit". */
+    --s1-bg: #1f1818; --s1-br: #7f1d1d; --s1-fg: #e4a0a0; --s1-bar: #ea7e7e; --s1-solid: #7f1d1d;  --s1-on: #edbbbb;
+    --s2-bg: #18160f; --s2-br: #78350f; --s2-fg: #d4b85e; --s2-bar: #e6b639; --s2-solid: #78350f;  --s2-on: #e0cf8b;
+    --s3-bg: #111815; --s3-br: #065f46; --s3-fg: #75c8a7; --s3-bar: #44c395; --s3-solid: #065f46;  --s3-on: #a1dcc1;
+    --s4-bg: #12191c; --s4-br: #155e75; --s4-fg: #71cbd6; --s4-bar: #36c4da; --s4-solid: #155e75;  --s4-on: #a0dde4;
+    --s5-bg: #1a1d25; --s5-br: #1e40af; --s5-fg: #92b8e2; --s5-bar: #6fa7eb; --s5-solid: #1e40af;  --s5-on: #b3cceb;
+    --s6-bg: #1e1b25; --s6-br: #5b21b6; --s6-fg: #b8ace8; --s6-bar: #ac96ef; --s6-solid: #5b21b6;  --s6-on: #ccc4ef;
 
     /* Unchanged: bright yellow on a near-black ground is exactly the one thing
        that should draw the eye first. */
