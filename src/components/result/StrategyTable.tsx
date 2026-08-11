@@ -1,4 +1,4 @@
-import { Badge, Dot } from '@/components/ui/badge'
+import { Badge } from '@/components/ui/badge'
 import { useI18n } from '@/context/I18nContext'
 import { spiritClass } from '@/lib/spiritTheme'
 import type { Rules, Spirit } from '@/data/seasons'
@@ -9,14 +9,13 @@ function StratBadge({ opt }: { opt: LevelOpt | undefined }) {
   if (!opt || opt.k === 'none') return <span className="text-muted-foreground">—</span>
 
   const buy = opt.buys.length > 0
-    ? <Badge variant="buy" className="gap-1"><Dot filled />{t('badge_buy', { c: opt.buys.join('+') })}</Badge>
+    ? <Badge variant="buy">{t('badge_buy', { c: opt.buys.join('+') })}</Badge>
     : null
   // A skipped level can still cost 0 days once carried-over friendship covers
   // it; label it by what was given up rather than by a misleading "0D".
   const skip = opt.skips.length > 0
     ? (
-      <Badge variant="skip" className="gap-1">
-        <Dot filled={false} />
+      <Badge variant="skip">
         {opt.days > 0 ? t('badge_skip', { d: opt.days }) : t('badge_skip_free')}
       </Badge>
     )

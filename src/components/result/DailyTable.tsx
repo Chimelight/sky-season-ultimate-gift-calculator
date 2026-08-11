@@ -1,5 +1,5 @@
 import { Fragment, useMemo } from 'react'
-import { Badge, Dot } from '@/components/ui/badge'
+import { Badge } from '@/components/ui/badge'
 import { useI18n } from '@/context/I18nContext'
 import { useAppState } from '@/context/StateContext'
 import { addDays } from '@/lib/helpers'
@@ -40,22 +40,13 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
   }
   const spiritName = (i: number) => spirits[i]?.name || t('spirit_name_default', { n: i + 1 })
 
-  // Solid + filled dot = the spirit now owns something; outline + hollow dot =
-  // it spent a day instead. Hue says which spirit, fill says which of the two
-  // friendship sources paid for it.
+  // Hue says which spirit; weight says which of the two friendship sources
+  // paid for it. Candles bought it (reversed block) or a day did (quiet block).
   function eventBadge(s: Step) {
     if (s.kind === 'collect') return <Badge variant="secondary">{t('step_collect')}</Badge>
-    if (s.kind === 'invite') {
-      return (
-        <Badge variant="skip" className="gap-1">
-          <Dot filled={false} />
-          {t('step_invite', { lv: s.lvl })}
-        </Badge>
-      )
-    }
+    if (s.kind === 'invite') return <Badge variant="soft">{t('step_invite', { lv: s.lvl })}</Badge>
     return (
-      <Badge variant="buy" className="gap-1">
-        <Dot filled />
+      <Badge variant="buy">
         {s.kind === 'heart'
           ? t('badge_item_heart', { c: -s.candles })
           : t('badge_item_buy', { lv: s.lvl, c: -s.candles })}
@@ -90,9 +81,12 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                   return (
                     <tr
                       key={i}
+                      // Today is marked once, on the date cell that spans the
+                      // whole day — never per row, which would draw rules
+                      // between the steps *inside* the day.
                       className={`align-middle ${ramp} ${i === r.steps.length - 1 ? 'border-b' : ''} ${
                         s.spiritIdx === null ? '' : 'bg-[var(--sp-bg)]'
-                      } ${isToday ? 'outline outline-1 -outline-offset-1 outline-primary/20' : ''}`}
+                      }`}
                     >
                       {i === 0 && (
                         <td
@@ -129,8 +123,7 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                         <div className="flex flex-wrap items-center gap-1">
                           {eventBadge(s)}
                           {s.skips.map((sk, k) => (
-                            <Badge key={`sk${k}`} variant="skip" className="gap-1">
-                              <Dot filled={false} />
+                            <Badge key={`sk${k}`} variant="skip">
                               {t('badge_item_skip', { lv: sk.lvl, c: sk.cost })}
                             </Badge>
                           ))}

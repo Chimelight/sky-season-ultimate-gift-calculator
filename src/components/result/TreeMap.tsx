@@ -1,6 +1,6 @@
 import { useRef, useEffect, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge, Dot } from '@/components/ui/badge'
+import { Badge } from '@/components/ui/badge'
 import { useI18n } from '@/context/I18nContext'
 import { shortName } from '@/lib/helpers'
 import { SPIRIT_RAMPS } from '@/lib/spiritTheme'
@@ -141,14 +141,17 @@ export function TreeMap({ result, spirits, rules }: { result: SolveResult; spiri
             <div ref={containerRef} className="overflow-x-auto" />
             <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-card to-transparent @[32rem]:hidden" />
           </div>
-          {/* Neutral ramp: the legend explains fill vs outline, and pinning it
-              to one spirit's hue would imply the distinction is that spirit's. */}
+          {/* Neutral ramp: the legend explains fill vs dashed edge, and pinning
+              it to one spirit's hue would imply the distinction is that
+              spirit's. `soft` rather than `buy` because it describes the map
+              above, whose cells are large enough that reversing every bought
+              one would turn the whole grid into solid blocks. */}
           <div className="flex flex-wrap gap-3 text-xs text-muted-foreground [--sp-bg:hsl(var(--muted))] [--sp-br:hsl(var(--border))] [--sp-fg:hsl(var(--foreground))]">
             <span className="flex items-center gap-1">
-              <Badge variant="buy" className="gap-1"><Dot filled />{t('legend_buy')}</Badge>
+              <Badge variant="soft">{t('legend_buy')}</Badge>
             </span>
             <span className="flex items-center gap-1">
-              <Badge variant="skip" className="gap-1"><Dot filled={false} />{t('legend_skip')}</Badge>
+              <Badge variant="skip">{t('legend_skip')}</Badge>
             </span>
           </div>
         </CardContent>
