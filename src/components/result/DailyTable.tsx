@@ -53,7 +53,10 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
   // paid for it. Candles bought it (reversed block) or a day did (quiet block).
   function eventBadge(s: Step) {
     if (s.kind === 'collect') return <Badge variant="secondary">{t('step_collect')}</Badge>
-    if (s.kind === 'invite') return <Badge variant="soft">{t('step_invite', { lv: s.lvl })}</Badge>
+    // `s.lvl` still carries the level the spirit is genuinely on, and
+    // check-model still pins it — it is just not shown, because it describes
+    // the spirit's state rather than the action.
+    if (s.kind === 'invite') return <Badge variant="soft">{t('step_invite')}</Badge>
     // font-normal overrides the variant's semibold: in a table this long the
     // emphasis a purchase needs is already carried by its denser ground and
     // darker ink, and bold on top of that turns every buy row into a shout.

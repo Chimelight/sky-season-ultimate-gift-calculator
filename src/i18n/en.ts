@@ -63,7 +63,11 @@ export const translations = {
   th_candles: "Candles",
   th_friendship: "Friendship",
   step_collect: "Dailies",
-  step_invite: "Lv{lv} invite",
+  // No level: an invite is one action a day worth +1, the same at every
+  // level. The level a buy or skip carries is the item's own tier, which is
+  // real; the level an invite would carry is just where the spirit currently
+  // stands, and the friendship column already shows that.
+  step_invite: "Invite",
   step_gain: "+{gain}",
   step_progress: "{after} / {req}",
   step_cleared: "Lv{lv} reached",
@@ -109,9 +113,9 @@ export const translations = {
   post_lv5: '  Lv 5: Buy Heart ({heart}C)',
   post_skipped: '_Skipped Entirely: {names} (Not Needed)._',
   post_schedule_header: '**Invite Schedule** (1 invite/day, sequential)',
-  post_sched_invites: "{dayStr}: invite {name} (Lv {lv}) x{n}",
+  post_sched_invites: "{dayStr}: invite {name} x{n}",
   post_sched_line: "{dayStr}: {actions}",
-  post_act_invite: "invite {name} (Lv {lv})",
+  post_act_invite: "invite {name}",
   post_act_buy: "buy {name} Lv{lv} {c}C",
   post_act_heart: "buy {name} Lv5 heart {c}C",
   post_act_skip: "skip Lv{lv} {c}C",
