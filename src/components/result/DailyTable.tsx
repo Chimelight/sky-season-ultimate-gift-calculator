@@ -54,8 +54,12 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
   function eventBadge(s: Step) {
     if (s.kind === 'collect') return <Badge variant="secondary">{t('step_collect')}</Badge>
     if (s.kind === 'invite') return <Badge variant="soft">{t('step_invite', { lv: s.lvl })}</Badge>
+    // font-normal overrides the variant's semibold: in a table this long the
+    // emphasis a purchase needs is already carried by its denser ground and
+    // darker ink, and bold on top of that turns every buy row into a shout.
+    // The strategy table keeps the weight — there the badges *are* the content.
     return (
-      <Badge variant="buy">
+      <Badge variant="buy" className="font-normal">
         {s.kind === 'heart'
           ? t('badge_item_heart', { c: -s.candles })
           : t('badge_item_buy', { lv: s.lvl, c: -s.candles })}
@@ -166,7 +170,7 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                                 scrolls horizontally if it comes to that. Not
                                 truncation — nothing is hidden. */}
                             {!sameSpirit && (
-                              <span className="text-[var(--sp-fg)] whitespace-nowrap">
+                              <span className="text-[var(--sp-fg)] font-semibold whitespace-nowrap">
                                 {spiritName(s.spiritIdx)}
                               </span>
                             )}
@@ -221,7 +225,9 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                             <Badge variant="secondary">{t('badge_pass', { pass: rules.pass })}</Badge>
                           )}
                           {s.cleared.map(lv => (
-                            <Badge key={`cl${lv}`} variant="order">{t('step_cleared', { lv })}</Badge>
+                            <Badge key={`cl${lv}`} variant="order" className="font-normal">
+                              {t('step_cleared', { lv })}
+                            </Badge>
                           ))}
                           {s.completes && s.spiritIdx !== null && (
                             <Badge variant="milestone" className="whitespace-nowrap">
