@@ -56,6 +56,7 @@ export const translations = {
   section_treemap: 'Tree Map (Bottom-up, Used Spirits Only)',
   legend_buy: 'Buy',
   legend_skip: 'Friendship-skip',
+  section_timeline: "Timeline",
   section_daily: "Daily Breakdown",
   th_day: "Day",
   th_balance: "Balance",

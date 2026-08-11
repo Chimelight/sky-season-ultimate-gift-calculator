@@ -56,6 +56,7 @@ export const translations = {
   section_treemap: '兑换树节点图（自下而上，仅显示使用的先祖）',
   legend_buy: '购买',
   legend_skip: '兑换树跳过',
+  section_timeline: "时间轴",
   section_daily: "每日明细",
   th_day: "日期",
   th_balance: "结余",
