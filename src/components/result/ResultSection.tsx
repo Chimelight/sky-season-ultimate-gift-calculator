@@ -3,6 +3,7 @@ import { useI18n } from '@/context/I18nContext'
 import { useAppState } from '@/context/StateContext'
 import { useSolve } from '@/hooks/useSolve'
 import { MetricsSummary } from './MetricsSummary'
+import { UltimateTimeline } from './UltimateTimeline'
 import { StrategyTable } from './StrategyTable'
 import { TreeMap } from './TreeMap'
 import { DailyTable } from './DailyTable'
@@ -42,6 +43,7 @@ export function ResultSection() {
           computed against, never from live state. A worker reply arrives after
           the state may already have moved on — switching seasons mid-solve used
           to index a 5-spirit result into a 4-spirit list and blank the page. */}
+      <UltimateTimeline result={outcome} ultimates={input.ultimates} />
       <MetricsSummary result={outcome} rules={input.rules} ultimates={input.ultimates} />
       <StrategyTable result={outcome} spirits={input.spirits} rules={input.rules} />
       <TreeMap result={outcome} spirits={input.spirits} rules={input.rules} />

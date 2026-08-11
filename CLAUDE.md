@@ -64,6 +64,7 @@ result/MetricsSummary.tsx  — Day/Candle metric cards
 result/StrategyTable.tsx   — per-spirit Lv1–4 strategy table with Buy/Skip badges
 result/TreeMap.tsx         — SVG tree map (bottom-up, used spirits only); colours come from CSS vars, so it takes no theme prop
 result/DailyTable.tsx      — one row per event from buildSchedule(), date cell spans the day, milestone badges
+result/UltimateTimeline.tsx— every ultimate on one day axis, with today; shows the spacing the metric cards cannot
 result/FriendshipBar.tsx   — the two-segment progress bar: already-held vs what this step added, ticked at level thresholds
 result/DiscordPost.tsx     — copyable Discord post textarea + copy button
 ```
