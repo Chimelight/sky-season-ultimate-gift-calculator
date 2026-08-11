@@ -142,6 +142,15 @@ curl -s -o /dev/null -w "%{http_code}" -X PATCH \
   "{WEBHOOK_URL}/messages/{MESSAGE_ID}"
 ```
 
+**A PATCH replaces the embed wholesale — it does not merge fields.** Any key
+left out of the payload is dropped, so omitting `timestamp` silently removes
+the date under the message. Fetch the message first and edit the embed you get
+back, rather than rebuilding it by hand:
+
+```bash
+curl -s "{WEBHOOK_URL}/messages/{MESSAGE_ID}"   # take .embeds[0], change only what is wrong
+```
+
 Rules for the JSON payload:
 - Escape all `"` inside strings as `\"`
 - Escape all newlines as `\n`
