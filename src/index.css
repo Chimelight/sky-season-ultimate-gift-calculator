@@ -51,6 +51,16 @@
        reads as a hole in the table, which is what earlier attempts did. */
     --ult-fill: #ffd400;
     --ult-on: #3d2e00;
+    /* The same milestone worn by the *day* rather than the badge. Gold at its
+       real lightness (H46 S65 L52) cannot carry small text on white — 2.10:1 —
+       and darkening it until it can lands at L34, which stops looking like gold
+       and starts looking like mud. So the gold is the ground here and never the
+       ink: the cell takes a pale gold wash, the rule takes true gold, and the
+       day number stays in the page's own foreground where it is plainly legible.
+       The rule is reinforcement, not the statement — the ★ badge on the same day
+       says it outright — so it is free to be chosen for looking like gold. */
+    --ult-line: #d4af37;
+    --ult-day: #fff6d8;
   }
 
   /* Dark foregrounds are deliberately not pure white. #fafafa on this ground
@@ -122,6 +132,10 @@
        that should draw the eye first. */
     --ult-fill: #ffd400;
     --ult-on: #3d2e00;
+    /* Gold reads as gold on a dark ground without any help, so it keeps its
+       real lightness here; the wash just warms the cell. */
+    --ult-line: #cba63e;
+    --ult-day: #2e2508;
   }
 }
 

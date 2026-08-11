@@ -27,15 +27,12 @@ const badgeVariants = cva(
         buy: 'border-transparent bg-[var(--sp-solid)] text-[var(--sp-on)] font-semibold',
         soft: 'border-[var(--sp-br)] bg-[var(--sp-bg)] text-[var(--sp-fg)]',
         skip: 'border-dashed border-[var(--sp-fg)] bg-[var(--sp-bg)] text-[var(--sp-fg)]',
-        // The spirit's number: an anchor, not an event, so it must not be
-        // mistakeable for one. It is also the smallest mark on the page, and
-        // chroma belongs on small dense marks — so this is the one place a
-        // fully saturated block is right. Reversed out of --sp-fg, which is
-        // the rung where every hue clears 4.5:1 against the page ground
-        // (5.02–7.10 light, 9.32–10.63 dark), and sits 4.5–6.0× off the buy
-        // badge's ground so the two never read as the same thing.
+        // The spirit's number: an anchor, not an event. It separates from the
+        // event badges by *size* — smaller type, tighter box, tighter radius —
+        // rather than by going darker, which only made it shout. Paired with
+        // the rule down the left edge of the cell it sits in, that is plenty.
         identity:
-          'border-transparent bg-[var(--sp-fg)] text-[hsl(var(--background))] font-semibold tabular-nums px-1.5',
+          'border-transparent bg-[var(--sp-br)] text-[var(--sp-fg)] font-semibold tabular-nums px-1 py-0 text-[0.68rem] leading-[1.35] rounded-[0.3rem]',
         // A spirit finishing is a milestone, not a purchase — it used to share
         // the buy style, which was survivable only while buy was a hue of its
         // own. Same ground as soft, but a full-strength edge and heavier text:

@@ -40,6 +40,15 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
   }
   const spiritName = (i: number) => spirits[i]?.name || t('spirit_name_default', { n: i + 1 })
 
+  // #N is position in the plan, the same number the strategy table and tree map
+  // use — not the spirit's index in the season, which would be a second, silently
+  // different numbering for the same spirits.
+  const planOrder = useMemo(() => {
+    const m = new Map<number, number>()
+    result.best.order.forEach((pi, k) => m.set(result.best.picks[pi].spiritIdx, k + 1))
+    return m
+  }, [result])
+
   // Hue says which spirit; weight says which of the two friendship sources
   // paid for it. Candles bought it (reversed block) or a day did (quiet block).
   function eventBadge(s: Step) {
@@ -91,8 +100,20 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                       {i === 0 && (
                         <td
                           rowSpan={r.steps.length}
+                          // An ultimate is reached by the *day*, not by the cell
+                          // the badge happens to land in, so the day itself is
+                          // marked. Today wins the rule when they coincide —
+                          // that one answers "where am I", which is why the
+                          // table gets opened — but the date stays gold either
+                          // way, so the milestone is never lost.
                           className={`py-1 pr-2 align-top whitespace-nowrap border-r ${
-                            isToday ? 'border-l-2 border-l-primary pl-2' : ''
+                            r.ultimates.length > 0 ? 'bg-[var(--ult-day)]' : ''
+                          } ${
+                            isToday
+                              ? 'border-l-2 border-l-primary pl-2'
+                              : r.ultimates.length > 0
+                                ? 'border-l-2 border-l-[var(--ult-line)] pl-2'
+                                : ''
                           }`}
                         >
                           <div className="font-medium tabular-nums">{t('day_prefix', { n: r.day })}</div>
@@ -102,20 +123,31 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                           )}
                         </td>
                       )}
-                      <td className="py-1 px-2 text-xs wrap-anywhere break-words">
-                        {/* The swatch, not a number: #N elsewhere means order in
-                            the plan, and a second numbering here would compete
-                            with it. Colour alone identifies the spirit, and the
-                            name beside it is the non-colour fallback. */}
-                        {s.spiritIdx === null || sameSpirit ? null : (
+                      {/* A rule down the left edge, on every step of the run, so
+                          a spirit's block reads as one thing at a glance. #N
+                          repeats with it; the name appears only where the spirit
+                          changes, since repeating it down a long run is noise. */}
+                      <td
+                        className={`py-1 px-2 text-xs border-l-[3px] ${
+                          s.spiritIdx === null ? 'border-l-transparent' : 'border-l-[var(--sp-fg)]'
+                        }`}
+                      >
+                        {s.spiritIdx === null ? null : (
                           <span className="flex items-center gap-1.5 min-w-0">
-                            <span
-                              aria-hidden="true"
-                              className="size-2 shrink-0 rounded-[2px] bg-[var(--sp-bar)]"
-                            />
-                            <span className="text-[var(--sp-fg)] wrap-anywhere break-words">
-                              {spiritName(s.spiritIdx)}
-                            </span>
+                            <Badge variant="identity" className="shrink-0">
+                              #{planOrder.get(s.spiritIdx) ?? s.spiritIdx + 1}
+                            </Badge>
+                            {/* The name sets this column's width rather than
+                                wrapping inside it: a name broken across two
+                                lines on every row of a run is far noisier than
+                                a slightly wider column, and the table already
+                                scrolls horizontally if it comes to that. Not
+                                truncation — nothing is hidden. */}
+                            {!sameSpirit && (
+                              <span className="text-[var(--sp-fg)] whitespace-nowrap">
+                                {spiritName(s.spiritIdx)}
+                              </span>
+                            )}
                           </span>
                         )}
                       </td>
@@ -143,7 +175,7 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                       </td>
                       <td className="py-1 px-2 text-xs whitespace-nowrap">
                         {s.gain > 0 ? (
-                          <span className="flex flex-col gap-0.5 min-w-[7rem]">
+                          <span className="flex flex-col gap-0.5 min-w-[9rem]">
                             <span className="tabular-nums flex items-baseline gap-1">
                               <span>
                                 {t('step_progress', {

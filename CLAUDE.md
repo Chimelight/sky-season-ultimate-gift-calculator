@@ -162,6 +162,8 @@ The chrome is shadcn zinc — use semantic tokens (`text-muted-foreground`, `bor
 
 Do not reintroduce green=buy / amber=skip — that spends hue on an axis that no longer owns it, and collides with spirits #2 and #3.
 
+The milestone day is marked on the date cell too — `--ult-day` wash plus an `--ult-line` rule — because an ultimate is reached by the *day*, not by the cell its badge lands in. Gold there is the **ground, never the ink**: at its real lightness (H46 S65 L52) gold measures 2.10:1 on white, and darkening it until small text passes lands at L34, which reads as mud rather than gold. The day number stays in the page foreground. `today` wins the rule when the two coincide, since that is the marker the table gets opened for, but the gold wash stays so the milestone is never lost.
+
 **One saturated fill in the whole app**, `--ult-fill` (`#ffd400`) with `--ult-on` text, for the ultimate marker. Everything around it sits at 90–100% lightness and low chroma, so prominence has to come from *chroma*, not from going dark: earlier attempts used mid-dark golds (33–53% lightness) and read as a dirty hole in the table rather than an achievement. Bright yellow also sits far enough from spirit #2's amber (50° vs 32°) to stay distinct, and carries a ★ so the distinction is not hue alone.
 
 Candles keep a fixed direction pair, since direction is the same for every spirit: `GAIN` (green) in, `SPEND` (rose) out, declared at the top of `DailyTable.tsx`. Rose appears nowhere else, so it never reads as an error the way `destructive` would. Friendship gets no flow colour — its gain is already drawn on the bar in the spirit's own hue.
@@ -175,7 +177,7 @@ Today is marked **once**, on the date cell that spans the whole day. Never per r
 Layouts must remain usable across viewports (280px–2560px) and all languages (including languages with 1.6×+ text expansion vs English, e.g. Bengali). The design is **container-query driven**, not viewport-breakpoint driven. Rules:
 
 1. **No new named breakpoints.** New responsive variants use `@container` queries or intrinsic sizing (`grid-cols-[repeat(auto-fit,minmax(min(Xrem,100%),1fr))]`). Legacy `sm:` is grandfathered but not to be extended.
-2. **Truncation is forbidden** on user-entered content or translated strings. Use `wrap-anywhere` + `break-words`. `line-clamp-N` only when content is recoverable elsewhere and visually required.
+2. **Truncation is forbidden** on user-entered content or translated strings. Use `wrap-anywhere` + `break-words`. `line-clamp-N` only when content is recoverable elsewhere and visually required. `whitespace-nowrap` is not truncation and is the right call inside a table that already scrolls horizontally — the spirit name in DailyTable uses it so it sizes its own column, because a name broken across two lines on every row of a run is far noisier than a slightly wider column. Nothing is hidden either way.
 3. **No `hidden sm:*`** hiding. Content must be reachable at every supported viewport; hide only decorative affordances (tooltips, hover hints).
 4. **Text widths use `ch`**: `min-w-[12ch]`, `w-[6ch]`. Never `w-16` / `w-28` on slots holding text or translated labels.
 5. **Grids of unknown count** use `grid-cols-[repeat(auto-fit,minmax(min(Xrem,100%),1fr))]`, not `grid-cols-N sm:grid-cols-M`.
