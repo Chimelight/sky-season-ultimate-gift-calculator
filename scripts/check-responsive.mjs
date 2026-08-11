@@ -23,7 +23,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const SNAPSHOT_DIR = path.join(__dirname, '__snapshots__')
 
 const VIEWPORTS = [280, 360, 480, 640, 768, 1024, 1440, 1920]
-const LANGS = ['en', 'zh-CN', 'bn']
+const LANGS = ['en', 'zh-CN']
 const BASE_URL = process.env.BASE_URL || 'http://localhost:5173'
 
 const startDev = () => {

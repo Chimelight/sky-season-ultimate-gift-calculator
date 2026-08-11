@@ -36,7 +36,7 @@ React + TypeScript SPA, built with Vite. UI components from shadcn/ui (Radix UI 
 
 - `src/data/seasons.ts` — `SEASONS` array (newest first); add new seasons here
 - `src/i18n/index.ts` — i18n core: `t(lang, key, vars)`, `getOrdinal(lang)`, `formatDate(dt, lang)`, `LANGS`
-- `src/i18n/en.ts`, `zh-CN.ts`, `bn.ts` — translation objects + ordinal functions per language
+- `src/i18n/en.ts`, `zh-CN.ts` — translation objects + ordinal functions per language
 - `src/lib/solver.ts` — `enumSpirit` + `solve`: core algorithm, pure functions, no React dependency
 - `src/lib/genPost.ts` — `genPost`: generates the copyable Discord post string
 - `src/lib/schedule.ts` — `buildSchedule`: expands a solved plan into `DayRow[]`, each holding the ordered `Step[]` for that day (dailies / invite / buy / heart, with candles, running balance, friendship progress and milestones); `formatFriendship` trims the fractional values. Each `Step` also carries `total` and `marks` — that spirit's final cumulative requirement and each level's threshold — so the progress bar can be drawn on one scale for the whole run. Both are per spirit, not global: a strategy that skips a level entirely never owes that level's friendship
@@ -174,7 +174,7 @@ Today is marked **once**, on the date cell that spans the whole day. Never per r
 
 ### Responsive Rules
 
-Layouts must remain usable across viewports (280px–2560px) and all languages (including languages with 1.6×+ text expansion vs English, e.g. Bengali). The design is **container-query driven**, not viewport-breakpoint driven. Rules:
+Layouts must remain usable across viewports (280px–2560px) and all languages. Assume up to 1.6× text expansion vs English: a future language can bring it back even though none shipped today does. The design is **container-query driven**, not viewport-breakpoint driven. Rules:
 
 1. **No new named breakpoints.** New responsive variants use `@container` queries or intrinsic sizing (`grid-cols-[repeat(auto-fit,minmax(min(Xrem,100%),1fr))]`). Legacy `sm:` is grandfathered but not to be extended.
 2. **Truncation is forbidden** on user-entered content or translated strings. Use `wrap-anywhere` + `break-words`. `line-clamp-N` only when content is recoverable elsewhere and visually required. `whitespace-nowrap` is not truncation and is the right call inside a table that already scrolls horizontally — the spirit name in DailyTable uses it so it sizes its own column, because a name broken across two lines on every row of a run is far noisier than a slightly wider column. Nothing is hidden either way.
@@ -184,4 +184,4 @@ Layouts must remain usable across viewports (280px–2560px) and all languages (
 6. **Sections that host cards** declare `[container-type:inline-size]` so nested cards react to their own width, not viewport.
 7. **Dynamic-content font sizes** use `text-fluid-*` tokens (`fluid-xs`, `fluid-sm`, `fluid-base`, `fluid-2xl`), not static `text-2xl`.
 8. **Supported viewport range: 280px–2560px.** Below 280px, `body` enables horizontal scroll (honest degradation). Do not design for sub-280px rendering.
-9. **New language checklist**: at 280/360/480px, inspect RulesCard skip labels, UltimatesSection row, Header title, StrategyTable badges. Run `npm run check:responsive` for automated regression.
+9. **New language checklist**: at 280/360/480px, inspect RulesCard skip labels, UltimatesSection row, Header title, StrategyTable badges. Add the code to `LANGS` in `scripts/check-responsive.mjs` too, or the automated pass silently skips it. Run `npm run check:responsive`.

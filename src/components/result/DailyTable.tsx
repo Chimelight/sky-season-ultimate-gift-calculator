@@ -66,6 +66,9 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
   return (
     <div className="space-y-2">
       <h3 id="daily-heading" className="text-sm font-semibold">{t('section_daily')}</h3>
+      {/* Badges here never wrap: the table scrolls horizontally, so a wrapped
+          two-line badge buys nothing and costs row rhythm — and the badge base
+          centres its text, which looks wrong the moment a second line appears. */}
       <div className="overflow-x-auto -mx-4 px-4">
         <table aria-labelledby="daily-heading" className="w-full min-w-[48rem] text-sm border-collapse">
           <thead>
@@ -107,10 +110,6 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                           // coincide — that is the marker the table gets opened
                           // for — but the wash and badge stay, so the milestone
                           // is never lost.
-                          //
-                          // nowrap is on the day and date lines rather than the
-                          // cell, so the badge is free to wrap instead of
-                          // widening this column on every row of the plan.
                           className={`py-1 pr-2 align-top border-r ${
                             r.ultimates.length > 0 ? 'bg-[var(--ult-day)]' : ''
                           } ${
@@ -138,7 +137,7 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                             <Badge
                               key={`u${ui}`}
                               variant="ult"
-                              className="mt-1"
+                              className="mt-1 whitespace-nowrap"
                               title={t('badge_ult_ready', { ord: ordinal(ui + 1) })}
                             >
                               ★ {t('badge_ult_short', { ord: ordinal(ui + 1) })}
@@ -225,7 +224,9 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                             <Badge key={`cl${lv}`} variant="order">{t('step_cleared', { lv })}</Badge>
                           ))}
                           {s.completes && s.spiritIdx !== null && (
-                            <Badge variant="milestone">{t('badge_spirit_done', { name: spiritName(s.spiritIdx) })}</Badge>
+                            <Badge variant="milestone" className="whitespace-nowrap">
+                              {t('badge_spirit_done', { name: spiritName(s.spiritIdx) })}
+                            </Badge>
                           )}
                           {/* No ultimate badge here — it belongs to the day, and
                               lives in the date cell. This column stays for the
