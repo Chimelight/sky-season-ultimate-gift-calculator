@@ -180,6 +180,21 @@ for (const season of SEASONS) {
     const byLvl = Object.fromEntries(reqs.map(x => [x.lvl, x.cumReq]))
     check(`${nm} invite labels match the level in progress`,
       mine.filter(s => s.kind === 'invite' && s.required !== byLvl[s.lvl]).length, 0)
+
+    // `unlocked` is what the reader is told just became buyable, so it has to be
+    // the next level that actually exists — not cleared+1, which a season with
+    // an empty level would make a lie — and the last one has to name the Lv5
+    // heart, whose entry requirement is the full cumulative total.
+    const present = reqs.map(x => x.lvl)
+    const expectedUnlock = lvl => present[present.indexOf(lvl) + 1] ?? 5
+    const unlockPairs = mine.flatMap(s => s.cleared.map((lvl, k) => [lvl, s.unlocked[k]]))
+    check(`${nm} unlocked names the next level that exists`,
+      unlockPairs.filter(([lvl, got]) => got !== expectedUnlock(lvl)).length, 0)
+    check(`${nm} every cleared level reports exactly one unlock`,
+      mine.filter(s => s.cleared.length !== s.unlocked.length).length, 0)
+    // Whatever it names must be a level the spirit can now afford to enter.
+    check(`${nm} the unlocked level is genuinely reachable when announced`,
+      mine.filter(s => s.unlocked.some(lv => s.after < entryReq(lv) - 1e-9)).length, 0)
   }
 }
 

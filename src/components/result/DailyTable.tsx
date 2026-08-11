@@ -227,9 +227,9 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                           {s.kind === 'collect' && r.day === 1 && rules.pass > 0 && (
                             <Badge variant="secondary">{t('badge_pass', { pass: rules.pass })}</Badge>
                           )}
-                          {s.cleared.map(lv => (
-                            <Badge key={`cl${lv}`} variant="order" className="font-normal">
-                              {t('step_cleared', { lv })}
+                          {s.unlocked.map(lv => (
+                            <Badge key={`ul${lv}`} variant="order" className="font-normal">
+                              {t('step_unlocked', { lv })}
                             </Badge>
                           ))}
                           {s.completes && s.spiritIdx !== null && (
