@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Rules, Spirit, Ultimate } from '@/data/seasons'
+import type { PlannedUltimate, Rules, Spirit } from '@/data/seasons'
 import { solve, type SolveError, type SolveResult } from '@/lib/solver'
 import type { SolveRequest } from '@/lib/solver.worker'
 
@@ -7,7 +7,8 @@ type Outcome = SolveResult | SolveError
 
 export interface SolveInput {
   spirits: Spirit[]
-  ultimates: Ultimate[]
+  /** In redemption order — the array order is what the solver consumes. */
+  ultimates: PlannedUltimate[]
   rules: Rules
   targetIdx: number
 }

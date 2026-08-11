@@ -33,6 +33,7 @@ export const translations = {
   ult_nth: '{ord}毕业礼',
   ult_season_hearts: '季节爱心',
   ult_prioritize: '优先',
+  ult_reorder: "拖动以调整{ord}毕业礼的兑换顺序,也可用方向键",
   ult_remove: '移除',
   ult_summary: '各毕业礼累计所需季节爱心：{cumStr}。计划完成 {done} / {total} 位先祖。优化目标：<b>{ultNth}</b>（最早获得）。',
   ult_summary_empty: '请至少添加一个毕业礼。',

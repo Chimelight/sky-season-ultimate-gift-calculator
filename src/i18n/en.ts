@@ -33,6 +33,7 @@ export const translations = {
   ult_nth: '{ord} Ultimate',
   ult_season_hearts: 'Seasonal Hearts',
   ult_prioritize: 'Prioritize',
+  ult_reorder: "Drag to reorder {ord} Ultimate, or use the arrow keys",
   ult_remove: 'Remove',
   ult_summary: 'Cumulative hearts at each Ultimate: {cumStr}. Plan completes {done} / {total} spirits. Optimizing for: <b>{ultNth}</b> (Earliest Available).',
   ult_summary_empty: 'Add at least one ultimate gift.',

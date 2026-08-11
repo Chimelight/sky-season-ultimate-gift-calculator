@@ -1,4 +1,4 @@
-import type { Spirit, Rules } from '@/data/seasons'
+import type { PlannedUltimate, Spirit, Rules } from '@/data/seasons'
 import type { SolveResult } from './solver'
 import { addDays, describeOpt } from './helpers'
 import { buildSchedule } from './schedule'
@@ -12,6 +12,8 @@ interface GenPostArgs {
   best: SolveResult['best']
   cumHearts: number[]
   targetIdx: number
+  /** In redemption order; `id` is what a reader should be told. */
+  ultimates: PlannedUltimate[]
   lang: string
   t: (key: string, vars?: Record<string, string | number>) => string
 }
@@ -20,17 +22,20 @@ function dayDate(startDate: string, n: number, lang: string): string {
   try { return formatDate(addDays(startDate, n - 1), lang) } catch { return '?' }
 }
 
-export function genPost({ seasonName, startDate, rules, spirits, best, cumHearts, targetIdx, lang, t }: GenPostArgs): string {
+export function genPost({ seasonName, startDate, rules, spirits, best, cumHearts, targetIdx, ultimates, lang, t }: GenPostArgs): string {
+  // Positions are the plan's running order; ids are the gifts. Every label uses
+  // the id, so a reordered plan still names the right one.
+  const ultOrd = (pos: number) => ordinal((ultimates[pos]?.id ?? pos) + 1)
   const ordinal = getOrdinal(lang)
   const totalCost = best.picks.reduce((s, p) => s + p.strat.cost, 0)
   const totalDays = best.picks.reduce((s, p) => s + p.strat.days, 0)
   const earned = rules.pass + rules.cpd * best.Tmax
 
   let p = t('post_header', { name: seasonName }) + '\n\n'
-  p += t('post_tldr', { ord: ordinal(targetIdx + 1) }) + '\n'
+  p += t('post_tldr', { ord: ultOrd(targetIdx) }) + '\n'
   best.Ts.forEach((T, i) => {
     const mark = i === targetIdx ? ' ★' : ''
-    p += t('post_ult_line', { ord: ordinal(i + 1), hearts: cumHearts[i], day: T, date: dayDate(startDate, T, lang), mark }) + '\n'
+    p += t('post_ult_line', { ord: ultOrd(i), hearts: cumHearts[i], day: T, date: dayDate(startDate, T, lang), mark }) + '\n'
   })
   p += '\n' + t('post_requires', { pass: rules.pass, spiritCount: spirits.length, totalHearts: cumHearts[cumHearts.length - 1] }) + '\n\n'
   p += t('post_per_spirit') + '\n'
@@ -106,7 +111,7 @@ export function genPost({ seasonName, startDate, rules, spirits, best, cumHearts
       if (s.completes) acts.push(t('post_act_complete', { name: who }))
       for (const u of s.ultimates) {
         acts.push(t('post_act_ult', {
-          ord: ordinal(u + 1), date: dayDate(startDate, rows[i].day, lang),
+          ord: ultOrd(u), date: dayDate(startDate, rows[i].day, lang),
         }))
       }
     }

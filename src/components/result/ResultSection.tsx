@@ -42,11 +42,11 @@ export function ResultSection() {
           computed against, never from live state. A worker reply arrives after
           the state may already have moved on — switching seasons mid-solve used
           to index a 5-spirit result into a 4-spirit list and blank the page. */}
-      <MetricsSummary result={outcome} rules={input.rules} />
+      <MetricsSummary result={outcome} rules={input.rules} ultimates={input.ultimates} />
       <StrategyTable result={outcome} spirits={input.spirits} rules={input.rules} />
       <TreeMap result={outcome} spirits={input.spirits} rules={input.rules} />
-      <DailyTable result={outcome} spirits={input.spirits} rules={input.rules} />
-      <DiscordPost result={outcome} spirits={input.spirits} rules={input.rules} />
+      <DailyTable result={outcome} spirits={input.spirits} rules={input.rules} ultimates={input.ultimates} />
+      <DiscordPost result={outcome} spirits={input.spirits} rules={input.rules} ultimates={input.ultimates} />
     </div>
   )
 }

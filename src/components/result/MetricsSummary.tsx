@@ -3,10 +3,12 @@ import { Badge } from '@/components/ui/badge'
 import { useI18n } from '@/context/I18nContext'
 import { useAppState } from '@/context/StateContext'
 import { addDays } from '@/lib/helpers'
-import type { Rules } from '@/data/seasons'
+import type { PlannedUltimate, Rules } from '@/data/seasons'
 import type { SolveResult } from '@/lib/solver'
 
-export function MetricsSummary({ result, rules }: { result: SolveResult; rules: Rules }) {
+export function MetricsSummary({ result, rules, ultimates }: {
+  result: SolveResult; rules: Rules; ultimates: PlannedUltimate[]
+}) {
   const { t, ordinal, formatDate } = useI18n()
   const { state } = useAppState()
   const { best, cumHearts, targetIdx } = result
@@ -27,7 +29,7 @@ export function MetricsSummary({ result, rules }: { result: SolveResult; rules: 
             <div className="flex items-start justify-between flex-wrap gap-1.5">
               <div className="min-w-[6ch]">
                 <div className="text-xs font-medium text-muted-foreground wrap-anywhere">
-                  {t('ult_hearts_label', { ord: ordinal(i + 1), hearts: cumHearts[i] })}
+                  {t('ult_hearts_label', { ord: ordinal((ultimates[i]?.id ?? i) + 1), hearts: cumHearts[i] })}
                 </div>
                 <div className="text-fluid-xl font-bold tabular-nums leading-tight">{t('day_prefix', { n: T })}</div>
                 <div className="text-xs text-muted-foreground wrap-anywhere">{dayDate(T)}</div>
