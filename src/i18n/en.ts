@@ -70,11 +70,11 @@ export const translations = {
   step_invite: "Invite",
   step_gain: "+{gain}",
   step_progress: "{after} / {req}",
-  // Names what the threshold *opened*, not what it finished. Neither "reached"
-  // nor "complete" is honest here: the level's own items can be skipped, so
-  // meeting its friendship threshold does not mean owning it. What is always
-  // true is that the next tier just became buyable.
-  step_unlocked: "Lv{lv} unlocked",
+  // A transition, which sidesteps having to pick a verb at all. "Reached" was
+  // ambiguous and "complete" was false — a level's own items can be skipped,
+  // so meeting its friendship threshold does not mean owning it. The arrow
+  // states only what happened: this threshold is behind us, that tier is open.
+  step_level_up: "Lv{from} → Lv{to}",
   badge_item_buy: "Lv{lv} buy {c}C",
   badge_item_skip: "Lv{lv} skip {c}C",
   badge_item_heart: "Lv5 heart {c}C",
@@ -123,7 +123,7 @@ export const translations = {
   post_act_buy: "buy {name} Lv{lv} {c}C",
   post_act_heart: "buy {name} Lv5 heart {c}C",
   post_act_skip: "skip Lv{lv} {c}C",
-  post_act_unlocked: "Lv{lv} unlocked",
+  post_act_level_up: "Lv{from} -> Lv{to}",
   post_act_complete: "** {name} COMPLETE **",
   post_act_ult: "** {ord} ULTIMATE READY ({date}) **",
   post_day_single: 'Day {day}',

@@ -227,9 +227,12 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                           {s.kind === 'collect' && r.day === 1 && rules.pass > 0 && (
                             <Badge variant="secondary">{t('badge_pass', { pass: rules.pass })}</Badge>
                           )}
-                          {s.unlocked.map(lv => (
-                            <Badge key={`ul${lv}`} variant="order" className="font-normal">
-                              {t('step_unlocked', { lv })}
+                          {/* Paired by index: cleared[k] is the threshold just
+                              met, unlocked[k] the tier it opened. check-model
+                              pins the two arrays to the same length. */}
+                          {s.cleared.map((lv, k) => (
+                            <Badge key={`lu${lv}`} variant="order" className="font-normal whitespace-nowrap">
+                              {t('step_level_up', { from: lv, to: s.unlocked[k] })}
                             </Badge>
                           ))}
                           {s.completes && s.spiritIdx !== null && (

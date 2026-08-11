@@ -101,7 +101,8 @@ export function genPost({ seasonName, startDate, rules, spirits, best, cumHearts
       else if (s.kind === 'heart') acts.push(t('post_act_heart', { name: who, c: -s.candles }))
       else acts.push(t('post_act_buy', { name: who, lv: s.lvl, c: -s.candles }))
       for (const sk of s.skips) acts.push(t('post_act_skip', { lv: sk.lvl, c: sk.cost }))
-      for (const lv of s.unlocked) acts.push(t('post_act_unlocked', { lv }))
+      // ASCII arrow: this goes inside a Discord code block.
+      s.cleared.forEach((lv, k) => acts.push(t('post_act_level_up', { from: lv, to: s.unlocked[k] })))
       if (s.completes) acts.push(t('post_act_complete', { name: who }))
       for (const u of s.ultimates) {
         acts.push(t('post_act_ult', {
