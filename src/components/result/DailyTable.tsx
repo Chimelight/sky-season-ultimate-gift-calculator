@@ -1,17 +1,20 @@
 import { Fragment, useMemo } from 'react'
-import { Badge } from '@/components/ui/badge'
+import { Badge, Dot } from '@/components/ui/badge'
 import { useI18n } from '@/context/I18nContext'
 import { useAppState } from '@/context/StateContext'
 import { addDays } from '@/lib/helpers'
 import { buildSchedule, formatFriendship } from '@/lib/schedule'
+import { spiritClass } from '@/lib/spiritTheme'
+import { FriendshipBar } from './FriendshipBar'
 import type { Step } from '@/lib/schedule'
 import type { Rules, Spirit } from '@/data/seasons'
 import type { SolveResult } from '@/lib/solver'
 
-// Numbers are coloured by flow direction, which is a different axis from the
-// badges: a badge says what the event was, these say which way the value moved.
-// A purchase row therefore reads green badge / red candles / green friendship —
-// bought something, candles left, friendship arrived.
+// Candles are the one column with a direction, and it is the same direction for
+// every spirit, so it keeps a fixed pair rather than the identity ramp. Rose
+// appears nowhere else, so it never reads as an error the way `destructive`
+// would. Friendship needs no colour of its own — its gain is already drawn on
+// the bar in the spirit's own hue.
 const GAIN = 'text-green-700 dark:text-green-400'
 const SPEND = 'text-rose-700 dark:text-rose-400'
 
@@ -37,11 +40,27 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
   }
   const spiritName = (i: number) => spirits[i]?.name || t('spirit_name_default', { n: i + 1 })
 
+  // Solid + filled dot = the spirit now owns something; outline + hollow dot =
+  // it spent a day instead. Hue says which spirit, fill says which of the two
+  // friendship sources paid for it.
   function eventBadge(s: Step) {
     if (s.kind === 'collect') return <Badge variant="secondary">{t('step_collect')}</Badge>
-    if (s.kind === 'invite') return <Badge variant="skip">{t('step_invite', { lv: s.lvl })}</Badge>
-    if (s.kind === 'heart') return <Badge variant="buy">{t('badge_item_heart', { c: -s.candles })}</Badge>
-    return <Badge variant="buy">{t('badge_item_buy', { lv: s.lvl, c: -s.candles })}</Badge>
+    if (s.kind === 'invite') {
+      return (
+        <Badge variant="skip" className="gap-1">
+          <Dot filled={false} />
+          {t('step_invite', { lv: s.lvl })}
+        </Badge>
+      )
+    }
+    return (
+      <Badge variant="buy" className="gap-1">
+        <Dot filled />
+        {s.kind === 'heart'
+          ? t('badge_item_heart', { c: -s.candles })
+          : t('badge_item_buy', { lv: s.lvl, c: -s.candles })}
+      </Badge>
+    )
   }
 
   return (
@@ -64,14 +83,16 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
             {rows.map(r => (
               <Fragment key={r.day}>
                 {r.steps.map((s, i) => {
-                  const notable = s.completes || s.ultimates.length > 0
                   const isToday = r.day === todayDay
                   // Repeat the spirit only when it changes; the date spans the day.
                   const sameSpirit = i > 0 && r.steps[i - 1].spiritIdx === s.spiritIdx
+                  const ramp = spiritClass(s.spiritIdx)
                   return (
                     <tr
                       key={i}
-                      className={`align-middle ${i === r.steps.length - 1 ? 'border-b' : ''} ${notable ? 'bg-muted/40' : ''} ${isToday ? 'bg-primary/5' : ''}`}
+                      className={`align-middle ${ramp} ${i === r.steps.length - 1 ? 'border-b' : ''} ${
+                        s.spiritIdx === null ? '' : 'bg-[var(--sp-bg)]'
+                      } ${isToday ? 'outline outline-1 -outline-offset-1 outline-primary/20' : ''}`}
                     >
                       {i === 0 && (
                         <td
@@ -87,14 +108,29 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                           )}
                         </td>
                       )}
-                      <td className="py-1 px-2 text-xs text-muted-foreground wrap-anywhere break-words">
-                        {s.spiritIdx === null || sameSpirit ? '' : spiritName(s.spiritIdx)}
+                      <td className="py-1 px-2 text-xs wrap-anywhere break-words">
+                        {/* The swatch, not a number: #N elsewhere means order in
+                            the plan, and a second numbering here would compete
+                            with it. Colour alone identifies the spirit, and the
+                            name beside it is the non-colour fallback. */}
+                        {s.spiritIdx === null || sameSpirit ? null : (
+                          <span className="flex items-center gap-1.5 min-w-0">
+                            <span
+                              aria-hidden="true"
+                              className="size-2 shrink-0 rounded-[2px] bg-[var(--sp-bar)]"
+                            />
+                            <span className="text-[var(--sp-fg)] wrap-anywhere break-words">
+                              {spiritName(s.spiritIdx)}
+                            </span>
+                          </span>
+                        )}
                       </td>
                       <td className="py-1 px-2">
                         <div className="flex flex-wrap items-center gap-1">
                           {eventBadge(s)}
                           {s.skips.map((sk, k) => (
-                            <Badge key={`sk${k}`} variant="skip">
+                            <Badge key={`sk${k}`} variant="skip" className="gap-1">
+                              <Dot filled={false} />
                               {t('badge_item_skip', { lv: sk.lvl, c: sk.cost })}
                             </Badge>
                           ))}
@@ -114,17 +150,19 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                       </td>
                       <td className="py-1 px-2 text-xs whitespace-nowrap">
                         {s.gain > 0 ? (
-                          <span className="tabular-nums">
-                            <span className={GAIN}>
-                              {t('step_gain', { gain: formatFriendship(s.gain) })}
+                          <span className="flex flex-col gap-0.5 min-w-[7rem]">
+                            <span className="tabular-nums flex items-baseline gap-1">
+                              <span>
+                                {t('step_progress', {
+                                  after: formatFriendship(s.after),
+                                  req: formatFriendship(s.total),
+                                })}
+                              </span>
+                              <span className="text-[var(--sp-fg)] font-semibold">
+                                {t('step_gain', { gain: formatFriendship(s.gain) })}
+                              </span>
                             </span>
-                            <span className="text-muted-foreground mx-1">→</span>
-                            <span>
-                              {t('step_progress', {
-                                after: formatFriendship(s.after),
-                                req: s.required,
-                              })}
-                            </span>
+                            <FriendshipBar after={s.after} gain={s.gain} total={s.total} marks={s.marks} />
                           </span>
                         ) : (
                           <span className="text-muted-foreground">—</span>
@@ -142,8 +180,8 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                             <Badge variant="buy">{t('badge_spirit_done', { name: spiritName(s.spiritIdx) })}</Badge>
                           )}
                           {s.ultimates.map(ui => (
-                            <Badge key={`u${ui}`} variant="default">
-                              {t('badge_ult_ready', { ord: ordinal(ui + 1) })}
+                            <Badge key={`u${ui}`} variant="ult">
+                              ★ {t('badge_ult_ready', { ord: ordinal(ui + 1) })}
                             </Badge>
                           ))}
                         </div>

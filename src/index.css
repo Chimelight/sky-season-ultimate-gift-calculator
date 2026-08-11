@@ -26,6 +26,24 @@
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
     --radius: 0.5rem;
+
+    /* Per-spirit identity ramps. Six, because MAX_SPIRITS is six; walked round
+       the wheel from red so no two neighbours collide. Each is a ramp, not a
+       colour: bg tints a row, br fills the accrued part of a bar and outlines a
+       chip, fg carries text, bar fills what a step just added. */
+    --s1-bg: #fef2f2; --s1-br: #fecaca; --s1-fg: #b91c1c; --s1-bar: #dc2626;
+    --s2-bg: #fffbeb; --s2-br: #fde68a; --s2-fg: #b45309; --s2-bar: #d97706;
+    --s3-bg: #ecfdf5; --s3-br: #a7f3d0; --s3-fg: #047857; --s3-bar: #059669;
+    --s4-bg: #ecfeff; --s4-br: #a5f3fc; --s4-fg: #0e7490; --s4-bar: #0891b2;
+    --s5-bg: #eff6ff; --s5-br: #bfdbfe; --s5-fg: #1d4ed8; --s5-bar: #2563eb;
+    --s6-bg: #f5f3ff; --s6-br: #ddd6fe; --s6-fg: #6d28d9; --s6-bar: #7c3aed;
+
+    /* The ultimate marker. Deliberately the only fully saturated fill in the
+       app: everything around it sits at 90–100% lightness and low chroma, so
+       prominence has to come from chroma, not from going dark. A dark block
+       reads as a hole in the table, which is what earlier attempts did. */
+    --ult-fill: #ffd400;
+    --ult-on: #3d2e00;
   }
 
   .dark {
@@ -48,8 +66,36 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
+
+    /* Same six hues, re-derived rather than inverted: bg is a deep tint mixed
+       toward the page ground so a tinted row does not read as a raised card,
+       and fg/bar move up the ramp to stay legible on it. */
+    --s1-bg: #2b1214; --s1-br: #7f1d1d; --s1-fg: #fca5a5; --s1-bar: #f87171;
+    --s2-bg: #241c08; --s2-br: #78350f; --s2-fg: #fcd34d; --s2-bar: #fbbf24;
+    --s3-bg: #0c2119; --s3-br: #065f46; --s3-fg: #6ee7b7; --s3-bar: #34d399;
+    --s4-bg: #0b2028; --s4-br: #155e75; --s4-fg: #67e8f9; --s4-bar: #22d3ee;
+    --s5-bg: #131c34; --s5-br: #1e40af; --s5-fg: #93c5fd; --s5-bar: #60a5fa;
+    --s6-bg: #1d1433; --s6-br: #5b21b6; --s6-fg: #c4b5fd; --s6-bar: #a78bfa;
+
+    /* Unchanged: bright yellow on a near-black ground is exactly the one thing
+       that should draw the eye first. */
+    --ult-fill: #ffd400;
+    --ult-on: #3d2e00;
   }
 }
+
+/* Deliberately outside @layer — Tailwind purges class selectors it cannot find
+   in the source, and these names are built as `spirit-${n}` at runtime, so it
+   never sees them and would strip the whole block.
+
+   Applied to any subtree that belongs to one spirit; everything inside then
+   reads --sp-* without knowing which spirit it is. */
+.spirit-1 { --sp-bg: var(--s1-bg); --sp-br: var(--s1-br); --sp-fg: var(--s1-fg); --sp-bar: var(--s1-bar); }
+.spirit-2 { --sp-bg: var(--s2-bg); --sp-br: var(--s2-br); --sp-fg: var(--s2-fg); --sp-bar: var(--s2-bar); }
+.spirit-3 { --sp-bg: var(--s3-bg); --sp-br: var(--s3-br); --sp-fg: var(--s3-fg); --sp-bar: var(--s3-bar); }
+.spirit-4 { --sp-bg: var(--s4-bg); --sp-br: var(--s4-br); --sp-fg: var(--s4-fg); --sp-bar: var(--s4-bar); }
+.spirit-5 { --sp-bg: var(--s5-bg); --sp-br: var(--s5-br); --sp-fg: var(--s5-fg); --sp-bar: var(--s5-bar); }
+.spirit-6 { --sp-bg: var(--s6-bg); --sp-br: var(--s6-br); --sp-fg: var(--s6-fg); --sp-bar: var(--s6-bar); }
 
 @layer base {
   * {

@@ -11,14 +11,39 @@ const badgeVariants = cva(
         secondary: 'border-transparent bg-secondary text-secondary-foreground',
         destructive: 'border-transparent bg-destructive text-destructive-foreground',
         outline: 'text-foreground',
-        buy: 'border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300',
-        skip: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300',
+        // Buy and skip no longer own a hue — hue now means *which spirit*, so
+        // the buy/skip axis moved onto fill: solid is owned, outline is given
+        // up. Both read the ambient --sp-* set, so a badge takes its colour
+        // from whichever .spirit-N wrapper it sits inside.
+        buy: 'border-[var(--sp-br)] bg-[var(--sp-bg)] text-[var(--sp-fg)]',
+        skip: 'border-[var(--sp-br)] bg-transparent text-[var(--sp-fg)]',
+        // The spirit's number, worn wherever it needs to be identified at a
+        // glance. Stronger than a badge because it is the anchor, not an event.
+        identity: 'border-transparent bg-[var(--sp-br)] text-[var(--sp-fg)] font-semibold tabular-nums px-1.5',
+        // The one saturated fill in the app. See --ult-fill in index.css.
+        ult: 'border-transparent bg-[var(--ult-fill)] text-[var(--ult-on)] font-bold',
         order: 'border-transparent bg-primary/10 text-primary font-semibold',
       },
     },
     defaultVariants: { variant: 'default' },
   }
 )
+
+/**
+ * Filled or hollow, alongside the badge's fill, so buy vs skip never rests on
+ * colour alone — the same distinction has to survive a greyscale print and a
+ * colour-blind reader.
+ */
+export function Dot({ filled }: { filled: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-block size-1.5 shrink-0 rounded-full ${
+        filled ? 'bg-[var(--sp-fg)]' : 'border border-[var(--sp-fg)]'
+      }`}
+    />
+  )
+}
 
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,

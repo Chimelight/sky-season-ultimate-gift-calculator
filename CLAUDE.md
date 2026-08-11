@@ -39,8 +39,9 @@ React + TypeScript SPA, built with Vite. UI components from shadcn/ui (Radix UI 
 - `src/i18n/en.ts`, `zh-CN.ts`, `bn.ts` — translation objects + ordinal functions per language
 - `src/lib/solver.ts` — `enumSpirit` + `solve`: core algorithm, pure functions, no React dependency
 - `src/lib/genPost.ts` — `genPost`: generates the copyable Discord post string
-- `src/lib/schedule.ts` — `buildSchedule`: expands a solved plan into `DayRow[]`, each holding the ordered `Step[]` for that day (dailies / invite / buy / heart, with candles, running balance, friendship progress and milestones); `formatFriendship` trims the fractional values
+- `src/lib/schedule.ts` — `buildSchedule`: expands a solved plan into `DayRow[]`, each holding the ordered `Step[]` for that day (dailies / invite / buy / heart, with candles, running balance, friendship progress and milestones); `formatFriendship` trims the fractional values. Each `Step` also carries `total` and `marks` — that spirit's final cumulative requirement and each level's threshold — so the progress bar can be drawn on one scale for the whole run. Both are per spirit, not global: a strategy that skips a level entirely never owes that level's friendship
 - `src/lib/helpers.ts` — `shortName`, `addDays`, `describeOpt`
+- `src/lib/spiritTheme.ts` — `spiritClass(idx)`: maps a spirit onto one of the six identity ramps (see Colors)
 - `src/lib/utils.ts` — `cn()` (clsx + tailwind-merge)
 
 ### State (`src/context/`)
@@ -60,8 +61,9 @@ ultimates/UltimatesSection.tsx — ultimate list + summary
 result/ResultSection.tsx   — runs solve(), distributes result to sub-components
 result/MetricsSummary.tsx  — Day/Candle metric cards
 result/StrategyTable.tsx   — per-spirit Lv1–4 strategy table with Buy/Skip badges
-result/TreeMap.tsx         — SVG tree map (bottom-up, used spirits only)
+result/TreeMap.tsx         — SVG tree map (bottom-up, used spirits only); colours come from CSS vars, so it takes no theme prop
 result/DailyTable.tsx      — one row per event from buildSchedule(), date cell spans the day, milestone badges
+result/FriendshipBar.tsx   — the two-segment progress bar: already-held vs what this step added, ticked at level thresholds
 result/DiscordPost.tsx     — copyable Discord post textarea + copy button
 ```
 
@@ -136,11 +138,17 @@ Never use `h-7` for interactive controls — too small for touch targets.
 
 ### Colors
 
-Palette is shadcn zinc — do not add custom hex colors. Use semantic tokens (`text-muted-foreground`, `border-input`, etc.) so dark mode works automatically.
+The chrome is shadcn zinc — use semantic tokens (`text-muted-foreground`, `border-input`, etc.) so dark mode works automatically. The three exceptions below are the only places hex belongs, and they all live in `src/index.css`.
 
-Badge variants for strategy display: `buy` (green), `skip` (amber), `order` (primary/10). These are defined in `src/components/ui/badge.tsx` and must stay consistent with the SVG TreeMap colors in `src/components/result/TreeMap.tsx`.
+**Hue means *which spirit*, never *what happened*.** Six ramps `--s1-*`…`--s6-*` (red, amber, emerald, cyan, blue, violet — round the wheel from red, so no two neighbours collide) cover `MAX_SPIRITS`. Each is a ramp, not a colour: `bg` tints a row, `br` outlines a chip and fills the accrued part of a progress bar, `fg` carries text, `bar` fills what a step just added. `spiritClass(idx)` in `src/lib/spiritTheme.ts` returns `spirit-N`, which binds one ramp to the generic `--sp-*` names; every descendant then reads `--sp-*` without knowing which spirit it is. Those `.spirit-N` rules sit **outside `@layer`** deliberately — Tailwind purges class selectors it cannot find in the source, and the names are built as `` `spirit-${n}` `` at runtime, so inside a layer the whole block is stripped and every colour silently resolves to nothing.
 
-Numbers in the daily breakdown carry a *second, independent* encoding: badges colour the **action**, numerals colour the **flow**. `GAIN` (green) is anything arriving — candles collected, friendship earned — and `SPEND` (rose) is candles leaving; both are declared at the top of `DailyTable.tsx`. So a purchase row reads green badge / rose candles / green friendship, which is correct rather than contradictory: you bought something, candles left, friendship arrived. Rose appears nowhere else, so it never reads as an error the way `destructive` would.
+**Buy vs skip is carried by fill, plus a dot.** Solid + `<Dot filled />` = the spirit owns the item; outline + `<Dot filled={false} />` = it was given up and paid for with days instead. The dot is not decoration: it is what keeps the distinction alive in greyscale and for colour-blind readers, since both states now share a hue. The TreeMap says the same thing with a solid vs dashed stroke. Do not reintroduce green=buy / amber=skip — that spends hue on an axis that no longer owns it, and collides with spirits #2 and #3.
+
+**One saturated fill in the whole app**, `--ult-fill` (`#ffd400`) with `--ult-on` text, for the ultimate marker. Everything around it sits at 90–100% lightness and low chroma, so prominence has to come from *chroma*, not from going dark: earlier attempts used mid-dark golds (33–53% lightness) and read as a dirty hole in the table rather than an achievement. Bright yellow also sits far enough from spirit #2's amber (50° vs 32°) to stay distinct, and carries a ★ so the distinction is not hue alone.
+
+Candles keep a fixed direction pair, since direction is the same for every spirit: `GAIN` (green) in, `SPEND` (rose) out, declared at the top of `DailyTable.tsx`. Rose appears nowhere else, so it never reads as an error the way `destructive` would. Friendship gets no flow colour — its gain is already drawn on the bar in the spirit's own hue.
+
+The TreeMap takes its colours from the same CSS variables through `style="fill:var(--sN-fg)"`, so it can no longer disagree with the page around it; that is why it no longer receives a theme prop.
 
 ### Responsive Rules
 
