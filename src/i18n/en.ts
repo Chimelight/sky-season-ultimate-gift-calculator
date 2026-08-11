@@ -70,7 +70,11 @@ export const translations = {
   step_invite: "Invite",
   step_gain: "+{gain}",
   step_progress: "{after} / {req}",
-  step_cleared: "Lv{lv} reached",
+  // "complete", not "reached": this fires when the level's *cumulative*
+  // friendship threshold is met, i.e. the level is finished and the next one is
+  // open — never when the spirit arrives at it. "reached" reads both ways in
+  // English and the wrong reading is off by one level.
+  step_cleared: "Lv{lv} complete",
   badge_item_buy: "Lv{lv} buy {c}C",
   badge_item_skip: "Lv{lv} skip {c}C",
   badge_item_heart: "Lv5 heart {c}C",
@@ -119,7 +123,7 @@ export const translations = {
   post_act_buy: "buy {name} Lv{lv} {c}C",
   post_act_heart: "buy {name} Lv5 heart {c}C",
   post_act_skip: "skip Lv{lv} {c}C",
-  post_act_cleared: "Lv{lv} reached",
+  post_act_cleared: "Lv{lv} complete",
   post_act_complete: "** {name} COMPLETE **",
   post_act_ult: "** {ord} ULTIMATE READY ({date}) **",
   post_day_single: 'Day {day}',
