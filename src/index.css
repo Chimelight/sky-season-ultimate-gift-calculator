@@ -31,16 +31,19 @@
        the wheel from red so no two neighbours collide. Each is a ramp, not a
        colour: bg tints a row and fills a soft badge, br outlines it and fills
        the accrued part of a bar, fg carries text, bar fills what a step just
-       added, and solid/on are the emphatic badge. solid is one step denser
-       than bg rather than a reversed block: a saturated block sitting in a pale
-       row reads as heavy and dirty, so the emphasis comes from density, with
-       the ink darkening to match (5.69–6.47:1 here). */
-    --s1-bg: #fef2f2; --s1-br: #fecaca; --s1-fg: #b91c1c; --s1-bar: #dc2626; --s1-solid: #fecaca; --s1-on: #991b1b;
-    --s2-bg: #fffbeb; --s2-br: #fde68a; --s2-fg: #b45309; --s2-bar: #d97706; --s2-solid: #fde68a; --s2-on: #92400e;
-    --s3-bg: #ecfdf5; --s3-br: #a7f3d0; --s3-fg: #047857; --s3-bar: #059669; --s3-solid: #a7f3d0; --s3-on: #065f46;
-    --s4-bg: #ecfeff; --s4-br: #a5f3fc; --s4-fg: #0e7490; --s4-bar: #0891b2; --s4-solid: #a5f3fc; --s4-on: #155e75;
-    --s5-bg: #eff6ff; --s5-br: #bfdbfe; --s5-fg: #1d4ed8; --s5-bar: #2563eb; --s5-solid: #bfdbfe; --s5-on: #1e40af;
-    --s6-bg: #f5f3ff; --s6-br: #ddd6fe; --s6-fg: #6d28d9; --s6-bar: #7c3aed; --s6-solid: #ddd6fe; --s6-on: #5b21b6;
+       added, and solid/on are the emphatic badge. solid is only *just* denser
+       than bg — a 1.07–1.13 luminance step — and the work of standing out is
+       done by the ink, which drops to the 900 rung, plus semibold weight. Two
+       earlier attempts overshot: a reversed 700 block, then a 200 ground, and
+       both pulled the eye to the badge's *background* instead of its text, so
+       a purchase read as a coloured rectangle before it read as a number. The
+       block should register as a step, not a shout (8.14–9.23:1 here). */
+    --s1-bg: #fef2f2; --s1-br: #fecaca; --s1-fg: #b91c1c; --s1-bar: #dc2626; --s1-solid: #fee2e2; --s1-on: #7f1d1d;
+    --s2-bg: #fffbeb; --s2-br: #fde68a; --s2-fg: #b45309; --s2-bar: #d97706; --s2-solid: #fef3c7; --s2-on: #78350f;
+    --s3-bg: #ecfdf5; --s3-br: #a7f3d0; --s3-fg: #047857; --s3-bar: #059669; --s3-solid: #d1fae5; --s3-on: #064e3b;
+    --s4-bg: #ecfeff; --s4-br: #a5f3fc; --s4-fg: #0e7490; --s4-bar: #0891b2; --s4-solid: #cffafe; --s4-on: #164e63;
+    --s5-bg: #eff6ff; --s5-br: #bfdbfe; --s5-fg: #1d4ed8; --s5-bar: #2563eb; --s5-solid: #dbeafe; --s5-on: #1e3a8a;
+    --s6-bg: #f5f3ff; --s6-br: #ddd6fe; --s6-fg: #6d28d9; --s6-bar: #7c3aed; --s6-solid: #ede9fe; --s6-on: #4c1d95;
 
     /* The ultimate marker. Deliberately the only fully saturated fill in the
        app: everything around it sits at 90–100% lightness and low chroma, so
@@ -86,8 +89,10 @@
        toward the page ground so a tinted row does not read as a raised card,
        and fg/bar move up the ramp to stay legible on it.
 
-       The emphatic badge stays one step denser than the soft one here too,
-       just in the other direction: a deeper ground carrying brighter ink.
+       The emphatic badge cannot borrow the light theme's fix: here a *lighter*
+       ground would be louder, not quieter, so it sheds chroma instead (S 63–88%
+       down to 29–41%) at the same lightness rung. It sits 1.6–2.1× off the row
+       tint, enough to read as a distinct block without shouting (4.88–7.27:1).
 
        Chroma is pulled back hard on everything that carries text — 60% of the
        light-theme saturation, at 93% of the lightness. High-chroma light text
@@ -106,12 +111,12 @@
        their contrast ratio says. Chroma belongs on small dense marks — the
        swatch, the badge, the text, the bar — and those still carry identity
        here, so the row tint only has to say "this row belongs to a spirit". */
-    --s1-bg: #1f1818; --s1-br: #7f1d1d; --s1-fg: #e4a0a0; --s1-bar: #ea7e7e; --s1-solid: #7f1d1d;  --s1-on: #edbbbb;
-    --s2-bg: #18160f; --s2-br: #78350f; --s2-fg: #d4b85e; --s2-bar: #e6b639; --s2-solid: #78350f;  --s2-on: #e0cf8b;
-    --s3-bg: #111815; --s3-br: #065f46; --s3-fg: #75c8a7; --s3-bar: #44c395; --s3-solid: #065f46;  --s3-on: #a1dcc1;
-    --s4-bg: #12191c; --s4-br: #155e75; --s4-fg: #71cbd6; --s4-bar: #36c4da; --s4-solid: #155e75;  --s4-on: #a0dde4;
-    --s5-bg: #1a1d25; --s5-br: #1e40af; --s5-fg: #92b8e2; --s5-bar: #6fa7eb; --s5-solid: #1e40af;  --s5-on: #b3cceb;
-    --s6-bg: #1e1b25; --s6-br: #5b21b6; --s6-fg: #b8ace8; --s6-bar: #ac96ef; --s6-solid: #5b21b6;  --s6-on: #ccc4ef;
+    --s1-bg: #1f1818; --s1-br: #7f1d1d; --s1-fg: #e4a0a0; --s1-bar: #ea7e7e; --s1-solid: #5c3333;  --s1-on: #edbbbb;
+    --s2-bg: #18160f; --s2-br: #78350f; --s2-fg: #d4b85e; --s2-bar: #e6b639; --s2-solid: #543828;  --s2-on: #e0cf8b;
+    --s3-bg: #111815; --s3-br: #065f46; --s3-fg: #75c8a7; --s3-bar: #44c395; --s3-solid: #1c4137;  --s3-on: #a1dcc1;
+    --s4-bg: #12191c; --s4-br: #155e75; --s4-fg: #71cbd6; --s4-bar: #36c4da; --s4-solid: #2c4a53;  --s4-on: #a0dde4;
+    --s5-bg: #1a1d25; --s5-br: #1e40af; --s5-fg: #92b8e2; --s5-bar: #6fa7eb; --s5-solid: #404e7c;  --s5-on: #b3cceb;
+    --s6-bg: #1e1b25; --s6-br: #5b21b6; --s6-fg: #b8ace8; --s6-bar: #ac96ef; --s6-solid: #5c4482;  --s6-on: #ccc4ef;
 
     /* Unchanged: bright yellow on a near-black ground is exactly the one thing
        that should draw the eye first. */
