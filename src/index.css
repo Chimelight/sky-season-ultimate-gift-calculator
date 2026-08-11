@@ -50,23 +50,30 @@
     --ult-on: #3d2e00;
   }
 
+  /* Dark foregrounds are deliberately not pure white. #fafafa on this ground
+     measures 19:1 — far past what any text needs, and the excess reads as glare
+     rather than clarity. 88% keeps every pairing above 11:1 (14.96 on the page
+     ground, 11.20 on secondary blocks, 13.14 on the palest row tint) while
+     dropping emitted luminance about a fifth. The slight 240° cast keeps it in
+     the zinc family rather than sitting on the page as a flat grey.
+     muted-foreground stays put, so the two-tier hierarchy does not collapse. */
   .dark {
     --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    --foreground: 240 6% 88%;
     --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card-foreground: 240 6% 88%;
     --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
+    --popover-foreground: 240 6% 88%;
+    --primary: 240 6% 88%;
     --primary-foreground: 240 5.9% 10%;
     --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary-foreground: 240 6% 88%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
     --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent-foreground: 240 6% 88%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 240 6% 88%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
