@@ -21,6 +21,15 @@ export interface Step {
   after: number
   /** Cumulative friendship the level being worked on needs. */
   required: number
+  /**
+   * Friendship the spirit needs in total, so a bar can be drawn on one scale
+   * for the whole run rather than rescaling at every level. Per spirit, not
+   * global: a strategy that skips a level entirely never owes that level's
+   * friendship, so its total is genuinely smaller.
+   */
+  total: number
+  /** Cumulative threshold of each level the spirit actually has, for ticks. */
+  marks: readonly number[]
   /** Levels this step pushed past, in order. */
   cleared: number[]
   /** Items given up, tagged with the level whose clearing gave them up. */
@@ -261,6 +270,9 @@ export function buildSchedule(result: SolveResult, rules: Rules): DayRow[] {
     const days = [...new Set([...myInvites.map(v => v.day), ...myGroups.map(g => g.day)])].sort((a, b) => a - b)
 
     const mySkips = skipsAt.get(spiritIdx) ?? new Map<number, number[]>()
+    // Shared by every step of this spirit: the bar's scale and its tick marks.
+    const total = levelReqs[levelReqs.length - 1]?.cumReq ?? 0
+    const marks: readonly number[] = levelReqs.map(l => l.cumReq)
     let friendship = 0
     let clearedIdx = 0
     /** The level the spirit is actually on — the lowest it has not cleared. */
@@ -291,7 +303,7 @@ export function buildSchedule(result: SolveResult, rules: Rules): DayRow[] {
       const hasInvite = myInvites.some(v => v.day === d)
       const todays = myGroups.filter(g => g.day === d).sort((a, b) => a.lvl - b.lvl)
       const out: Step[] = []
-      const blank = { day: d, balance: 0, ultimates: [] as number[] }
+      const blank = { day: d, balance: 0, ultimates: [] as number[], total, marks }
 
       // One step per item, not per level: each unlock is its own action with its
       // own share of the level's friendship, which is what the sequence is for.
@@ -381,6 +393,8 @@ export function buildSchedule(result: SolveResult, rules: Rules): DayRow[] {
       gain: 0,
       after: 0,
       required: 0,
+      total: 0,
+      marks: [],
       cleared: [],
       skips: [],
       completes: false,

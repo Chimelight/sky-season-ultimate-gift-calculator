@@ -39,8 +39,9 @@ React + TypeScript SPA, built with Vite. UI components from shadcn/ui (Radix UI 
 - `src/i18n/en.ts`, `zh-CN.ts`, `bn.ts` — translation objects + ordinal functions per language
 - `src/lib/solver.ts` — `enumSpirit` + `solve`: core algorithm, pure functions, no React dependency
 - `src/lib/genPost.ts` — `genPost`: generates the copyable Discord post string
-- `src/lib/schedule.ts` — `buildSchedule`: expands a solved plan into `DayRow[]`, each holding the ordered `Step[]` for that day (dailies / invite / buy / heart, with candles, running balance, friendship progress and milestones); `formatFriendship` trims the fractional values
+- `src/lib/schedule.ts` — `buildSchedule`: expands a solved plan into `DayRow[]`, each holding the ordered `Step[]` for that day (dailies / invite / buy / heart, with candles, running balance, friendship progress and milestones); `formatFriendship` trims the fractional values. Each `Step` also carries `total` and `marks` — that spirit's final cumulative requirement and each level's threshold — so the progress bar can be drawn on one scale for the whole run. Both are per spirit, not global: a strategy that skips a level entirely never owes that level's friendship
 - `src/lib/helpers.ts` — `shortName`, `addDays`, `describeOpt`
+- `src/lib/spiritTheme.ts` — `spiritClass(idx)`: maps a spirit onto one of the six identity ramps (see Colors)
 - `src/lib/utils.ts` — `cn()` (clsx + tailwind-merge)
 
 ### State (`src/context/`)
@@ -60,8 +61,9 @@ ultimates/UltimatesSection.tsx — ultimate list + summary
 result/ResultSection.tsx   — runs solve(), distributes result to sub-components
 result/MetricsSummary.tsx  — Day/Candle metric cards
 result/StrategyTable.tsx   — per-spirit Lv1–4 strategy table with Buy/Skip badges
-result/TreeMap.tsx         — SVG tree map (bottom-up, used spirits only)
+result/TreeMap.tsx         — SVG tree map (bottom-up, used spirits only); colours come from CSS vars, so it takes no theme prop
 result/DailyTable.tsx      — one row per event from buildSchedule(), date cell spans the day, milestone badges
+result/FriendshipBar.tsx   — the two-segment progress bar: already-held vs what this step added, ticked at level thresholds
 result/DiscordPost.tsx     — copyable Discord post textarea + copy button
 ```
 
@@ -136,18 +138,46 @@ Never use `h-7` for interactive controls — too small for touch targets.
 
 ### Colors
 
-Palette is shadcn zinc — do not add custom hex colors. Use semantic tokens (`text-muted-foreground`, `border-input`, etc.) so dark mode works automatically.
+The chrome is shadcn zinc — use semantic tokens (`text-muted-foreground`, `border-input`, etc.) so dark mode works automatically. The three exceptions below are the only places hex belongs, and they all live in `src/index.css`.
 
-Badge variants for strategy display: `buy` (green), `skip` (amber), `order` (primary/10). These are defined in `src/components/ui/badge.tsx` and must stay consistent with the SVG TreeMap colors in `src/components/result/TreeMap.tsx`.
+**Hue means *which spirit*, never *what happened*.** Six ramps `--s1-*`…`--s6-*` (red, amber, emerald, cyan, blue, violet — round the wheel from red, so no two neighbours collide) cover `MAX_SPIRITS`. Each is a ramp, not a colour: `bg` tints a row and fills the soft badge, `br` outlines it and fills the accrued part of a progress bar, `fg` carries text, `bar` fills what a step just added, `solid`/`on` are the emphatic badge. `spiritClass(idx)` in `src/lib/spiritTheme.ts` returns `spirit-N`, which binds one ramp to the generic `--sp-*` names; every descendant then reads `--sp-*` without knowing which spirit it is. Those `.spirit-N` rules sit **outside `@layer`** deliberately — Tailwind purges class selectors it cannot find in the source, and the names are built as `` `spirit-${n}` `` at runtime, so inside a layer the whole block is stripped and every colour silently resolves to nothing.
 
-Numbers in the daily breakdown carry a *second, independent* encoding: badges colour the **action**, numerals colour the **flow**. `GAIN` (green) is anything arriving — candles collected, friendship earned — and `SPEND` (rose) is candles leaving; both are declared at the top of `DailyTable.tsx`. So a purchase row reads green badge / rose candles / green friendship, which is correct rather than contradictory: you bought something, candles left, friendship arrived. Rose appears nowhere else, so it never reads as an error the way `destructive` would.
+**Every badge role must stay separable, because they all share one hue now.** With hue reassigned to spirit identity, nothing is distinguished by colour any more — the burden fell on fill, edge and weight, and two roles quietly collapsed into the buy style before this was noticed. The current set, all reading the ambient `--sp-*`:
+
+| variant | ground | edge | weight | role |
+|---|---|---|---|---|
+| `identity` | `--sp-fg`, reversed text | none | semibold | the `#N` anchor — the one place a fully saturated block belongs, since it is the smallest mark on the page |
+| `buy` | `--sp-solid` | none | semibold | an item bought |
+| `soft` | `--sp-bg` | hairline `--sp-br` | normal | an invite |
+| `skip` | `--sp-bg` | dashed `--sp-fg` | normal | an item given up |
+| `milestone` | `--sp-bg` | solid `--sp-fg` | semibold | a spirit finished |
+| `ult` | `--ult-fill` | none | bold | an ultimate — the loudest thing in the app |
+
+**Buy vs skip is carried by weight, in three steps.** `buy` is the denser block (`solid`/`on`), `soft` the quiet one for the many invite rows, `skip` is soft with a dashed edge for the item given up; the TreeMap says the same with a solid vs dashed stroke. Two rules the variants exist to hold:
+
+- **Nothing is hollow, and no glyph carries meaning.** An earlier version used outlined badges with ●/○ dots; the dots were there only because both states shared a lightness. Solid blocks at different densities separate on lightness alone, which already survives greyscale and colour blindness.
+- **The emphatic badge is carried by its ink, not its ground.** In light, `solid` is only just denser than `bg` — a 1.07–1.13 luminance step — and the standing-out is done by dropping the ink to the 900 rung plus semibold. Three attempts overshot before this: a reversed 700 block, then a 200 ground, both of which pulled the eye to the badge's *background*, so a purchase read as a coloured rectangle before it read as a number. In dark the light-theme fix inverts wrongly — a lighter ground there is *louder* — so the ground sheds chroma instead (S 63–88% down to 29–41%) at the same lightness rung. Contrast after all this: 8.14–9.23 light, 4.88–7.27 dark.
+- **The dark ramps are not the light ones inverted — their chroma is cut.** Everything carrying text runs at 60% of the light-theme saturation and 93% of the lightness, because high-chroma light text on a dark ground halates and reads as glaring even when every contrast ratio is nominally fine. `bar` keeps more chroma (80%) than the text does: it must stay legible as a *graphic* against both the track and the accrued segment, and cutting it as hard as the text drops that under 3:1. Floors after the cut are text 4.83 and graphics 3.47 — check both before touching a dark value.
+- **Chroma scales inversely with area.** `--sN-bg` in dark is cut furthest of all, to a barely-hued dark band (S 13–23%), because it is the only token covering a large area. The breakdown alternates untinted Dailies rows with tinted spirit rows, so dozens of bands stack up at a regular pitch and two spirits' blocks often abut directly; opponent hues meeting at similar luminance vibrate at the boundary regardless of contrast ratio, and readers described the result as an optical-illusion image. Identity survives on the small dense marks — swatch, badge, name, bar — so the tint only has to say *this row belongs to a spirit*. Never restore chroma to a large field to make it "clearer".
+
+Do not reintroduce green=buy / amber=skip — that spends hue on an axis that no longer owns it, and collides with spirits #2 and #3.
+
+The milestone day is marked on the date cell too — `--ult-day` wash plus an `--ult-line` rule — because an ultimate is reached by the *day*, not by the cell its badge lands in. Gold there is the **ground, never the ink**: at its real lightness (H46 S65 L52) gold measures 2.10:1 on white, and darkening it until small text passes lands at L34, which reads as mud rather than gold. The day number stays in the page foreground. `today` wins the rule when the two coincide, since that is the marker the table gets opened for, but the gold wash stays so the milestone is never lost.
+
+**One saturated fill in the whole app**, `--ult-fill` (`#ffd400`) with `--ult-on` text, for the ultimate marker. Everything around it sits at 90–100% lightness and low chroma, so prominence has to come from *chroma*, not from going dark: earlier attempts used mid-dark golds (33–53% lightness) and read as a dirty hole in the table rather than an achievement. Bright yellow also sits far enough from spirit #2's amber (50° vs 32°) to stay distinct, and carries a ★ so the distinction is not hue alone.
+
+Candles keep a fixed direction pair, since direction is the same for every spirit: `GAIN` (green) in, `SPEND` (rose) out, declared at the top of `DailyTable.tsx`. Rose appears nowhere else, so it never reads as an error the way `destructive` would. Friendship gets no flow colour — its gain is already drawn on the bar in the spirit's own hue.
+
+The TreeMap takes its colours from the same CSS variables through `style="fill:var(--sN-fg)"`, so it can no longer disagree with the page around it; that is why it no longer receives a theme prop. Its legend uses `soft`, not `buy`, because it describes the map above — whose cells are large enough that making every bought one denser would turn the grid into a wall of blocks.
+
+Today is marked **once**, on the date cell that spans the whole day. Never per row: a `<tr>`-level outline or border draws rules *between* the steps inside the day, which reads as structure that is not there.
 
 ### Responsive Rules
 
 Layouts must remain usable across viewports (280px–2560px) and all languages (including languages with 1.6×+ text expansion vs English, e.g. Bengali). The design is **container-query driven**, not viewport-breakpoint driven. Rules:
 
 1. **No new named breakpoints.** New responsive variants use `@container` queries or intrinsic sizing (`grid-cols-[repeat(auto-fit,minmax(min(Xrem,100%),1fr))]`). Legacy `sm:` is grandfathered but not to be extended.
-2. **Truncation is forbidden** on user-entered content or translated strings. Use `wrap-anywhere` + `break-words`. `line-clamp-N` only when content is recoverable elsewhere and visually required.
+2. **Truncation is forbidden** on user-entered content or translated strings. Use `wrap-anywhere` + `break-words`. `line-clamp-N` only when content is recoverable elsewhere and visually required. `whitespace-nowrap` is not truncation and is the right call inside a table that already scrolls horizontally — the spirit name in DailyTable uses it so it sizes its own column, because a name broken across two lines on every row of a run is far noisier than a slightly wider column. Nothing is hidden either way.
 3. **No `hidden sm:*`** hiding. Content must be reachable at every supported viewport; hide only decorative affordances (tooltips, hover hints).
 4. **Text widths use `ch`**: `min-w-[12ch]`, `w-[6ch]`. Never `w-16` / `w-28` on slots holding text or translated labels.
 5. **Grids of unknown count** use `grid-cols-[repeat(auto-fit,minmax(min(Xrem,100%),1fr))]`, not `grid-cols-N sm:grid-cols-M`.

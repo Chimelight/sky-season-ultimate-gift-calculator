@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { useI18n } from '@/context/I18nContext'
+import { spiritClass } from '@/lib/spiritTheme'
 import type { Rules, Spirit } from '@/data/seasons'
 import type { SolveResult, LevelOpt } from '@/lib/solver'
 
@@ -13,7 +14,11 @@ function StratBadge({ opt }: { opt: LevelOpt | undefined }) {
   // A skipped level can still cost 0 days once carried-over friendship covers
   // it; label it by what was given up rather than by a misleading "0D".
   const skip = opt.skips.length > 0
-    ? <Badge variant="skip">{opt.days > 0 ? t('badge_skip', { d: opt.days }) : t('badge_skip_free')}</Badge>
+    ? (
+      <Badge variant="skip">
+        {opt.days > 0 ? t('badge_skip', { d: opt.days }) : t('badge_skip_free')}
+      </Badge>
+    )
     : null
 
   if (buy && !skip) return buy
@@ -62,10 +67,12 @@ export function StrategyTable({ result, spirits, rules }: { result: SolveResult;
           </thead>
           <tbody>
             {usedSpirits.map(({ sp, idx, info }) => (
-              <tr key={idx} className="border-b last:border-0 align-middle">
+              <tr key={idx} className={`border-b last:border-0 align-middle ${spiritClass(idx)}`}>
                 <td className="py-2 pr-2 font-medium wrap-anywhere break-words">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <Badge variant="order" className="shrink-0">#{info!.orderInPlan + 1}</Badge>
+                    {/* Wears the spirit's colour but keeps counting plan order —
+                        the colour says which spirit, the number says when. */}
+                    <Badge variant="identity" className="shrink-0">#{info!.orderInPlan + 1}</Badge>
                     <span className="wrap-anywhere break-words">{sp.name}</span>
                   </div>
                 </td>

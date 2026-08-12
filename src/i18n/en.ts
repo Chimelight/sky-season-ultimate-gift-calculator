@@ -74,6 +74,8 @@ export const translations = {
   badge_today: "Today",
   badge_spirit_done: "{name} complete",
   badge_ult_ready: "{ord} Ultimate claimable",
+  // Short form for the date cell, which is otherwise a two-line column
+  badge_ult_short: "{ord} Ultimate",
   note_daily: "Each day is expanded in the order things happen. Buying an item and inviting both add friendship; reaching a level's cumulative requirement unlocks the next. A purchase settles on the day its candles are available.",
   section_discord: 'Discord Post',
   btn_copy: 'Copy',

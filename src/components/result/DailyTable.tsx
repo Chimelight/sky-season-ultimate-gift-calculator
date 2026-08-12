@@ -4,14 +4,17 @@ import { useI18n } from '@/context/I18nContext'
 import { useAppState } from '@/context/StateContext'
 import { addDays } from '@/lib/helpers'
 import { buildSchedule, formatFriendship } from '@/lib/schedule'
+import { spiritClass } from '@/lib/spiritTheme'
+import { FriendshipBar } from './FriendshipBar'
 import type { Step } from '@/lib/schedule'
 import type { Rules, Spirit } from '@/data/seasons'
 import type { SolveResult } from '@/lib/solver'
 
-// Numbers are coloured by flow direction, which is a different axis from the
-// badges: a badge says what the event was, these say which way the value moved.
-// A purchase row therefore reads green badge / red candles / green friendship —
-// bought something, candles left, friendship arrived.
+// Candles are the one column with a direction, and it is the same direction for
+// every spirit, so it keeps a fixed pair rather than the identity ramp. Rose
+// appears nowhere else, so it never reads as an error the way `destructive`
+// would. Friendship needs no colour of its own — its gain is already drawn on
+// the bar in the spirit's own hue.
 const GAIN = 'text-green-700 dark:text-green-400'
 const SPEND = 'text-rose-700 dark:text-rose-400'
 
@@ -37,11 +40,27 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
   }
   const spiritName = (i: number) => spirits[i]?.name || t('spirit_name_default', { n: i + 1 })
 
+  // #N is position in the plan, the same number the strategy table and tree map
+  // use — not the spirit's index in the season, which would be a second, silently
+  // different numbering for the same spirits.
+  const planOrder = useMemo(() => {
+    const m = new Map<number, number>()
+    result.best.order.forEach((pi, k) => m.set(result.best.picks[pi].spiritIdx, k + 1))
+    return m
+  }, [result])
+
+  // Hue says which spirit; weight says which of the two friendship sources
+  // paid for it. Candles bought it (reversed block) or a day did (quiet block).
   function eventBadge(s: Step) {
     if (s.kind === 'collect') return <Badge variant="secondary">{t('step_collect')}</Badge>
-    if (s.kind === 'invite') return <Badge variant="skip">{t('step_invite', { lv: s.lvl })}</Badge>
-    if (s.kind === 'heart') return <Badge variant="buy">{t('badge_item_heart', { c: -s.candles })}</Badge>
-    return <Badge variant="buy">{t('badge_item_buy', { lv: s.lvl, c: -s.candles })}</Badge>
+    if (s.kind === 'invite') return <Badge variant="soft">{t('step_invite', { lv: s.lvl })}</Badge>
+    return (
+      <Badge variant="buy">
+        {s.kind === 'heart'
+          ? t('badge_item_heart', { c: -s.candles })
+          : t('badge_item_buy', { lv: s.lvl, c: -s.candles })}
+      </Badge>
+    )
   }
 
   return (
@@ -64,31 +83,96 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
             {rows.map(r => (
               <Fragment key={r.day}>
                 {r.steps.map((s, i) => {
-                  const notable = s.completes || s.ultimates.length > 0
                   const isToday = r.day === todayDay
                   // Repeat the spirit only when it changes; the date spans the day.
                   const sameSpirit = i > 0 && r.steps[i - 1].spiritIdx === s.spiritIdx
+                  const ramp = spiritClass(s.spiritIdx)
                   return (
                     <tr
                       key={i}
-                      className={`align-middle ${i === r.steps.length - 1 ? 'border-b' : ''} ${notable ? 'bg-muted/40' : ''} ${isToday ? 'bg-primary/5' : ''}`}
+                      // Today is marked once, on the date cell that spans the
+                      // whole day — never per row, which would draw rules
+                      // between the steps *inside* the day.
+                      className={`align-middle ${ramp} ${i === r.steps.length - 1 ? 'border-b' : ''} ${
+                        s.spiritIdx === null ? '' : 'bg-[var(--sp-bg)]'
+                      }`}
                     >
                       {i === 0 && (
                         <td
                           rowSpan={r.steps.length}
-                          className={`py-1 pr-2 align-top whitespace-nowrap border-r ${
-                            isToday ? 'border-l-2 border-l-primary pl-2' : ''
+                          // An ultimate is reached by the *day*, not by the step
+                          // whose row its badge happened to land in, so the
+                          // whole marking lives here: gold wash, gold rule, and
+                          // the badge itself. Today wins the rule when the two
+                          // coincide — that is the marker the table gets opened
+                          // for — but the wash and badge stay, so the milestone
+                          // is never lost.
+                          //
+                          // nowrap is on the day and date lines rather than the
+                          // cell, so the badge is free to wrap instead of
+                          // widening this column on every row of the plan.
+                          className={`py-1 pr-2 align-top border-r ${
+                            r.ultimates.length > 0 ? 'bg-[var(--ult-day)]' : ''
+                          } ${
+                            isToday
+                              ? 'border-l-2 border-l-primary pl-2'
+                              : r.ultimates.length > 0
+                                ? 'border-l-2 border-l-[var(--ult-line)] pl-2'
+                                : ''
                           }`}
                         >
-                          <div className="font-medium tabular-nums">{t('day_prefix', { n: r.day })}</div>
-                          <div className="text-xs text-muted-foreground">{dayDate(r.day)}</div>
+                          <div className="font-medium tabular-nums whitespace-nowrap">
+                            {t('day_prefix', { n: r.day })}
+                          </div>
+                          <div className="text-xs text-muted-foreground whitespace-nowrap">{dayDate(r.day)}</div>
                           {isToday && (
                             <Badge variant="default" className="mt-0.5">{t('badge_today')}</Badge>
                           )}
+                          {/* Short form here: the full phrase is what set this
+                              column's width, and the day column pays that on
+                              every row of the plan for something a season hits
+                              two or three times. The full wording stays in the
+                              title, and the gold cell already says "claimable"
+                              in colour. */}
+                          {r.ultimates.map(ui => (
+                            <Badge
+                              key={`u${ui}`}
+                              variant="ult"
+                              className="mt-1"
+                              title={t('badge_ult_ready', { ord: ordinal(ui + 1) })}
+                            >
+                              ★ {t('badge_ult_short', { ord: ordinal(ui + 1) })}
+                            </Badge>
+                          ))}
                         </td>
                       )}
-                      <td className="py-1 px-2 text-xs text-muted-foreground wrap-anywhere break-words">
-                        {s.spiritIdx === null || sameSpirit ? '' : spiritName(s.spiritIdx)}
+                      {/* A rule down the left edge, on every step of the run, so
+                          a spirit's block reads as one thing at a glance. #N
+                          repeats with it; the name appears only where the spirit
+                          changes, since repeating it down a long run is noise. */}
+                      <td
+                        className={`py-1 px-2 text-xs border-l-[3px] ${
+                          s.spiritIdx === null ? 'border-l-transparent' : 'border-l-[var(--sp-fg)]'
+                        }`}
+                      >
+                        {s.spiritIdx === null ? null : (
+                          <span className="flex items-center gap-1.5 min-w-0">
+                            <Badge variant="identity" className="shrink-0">
+                              #{planOrder.get(s.spiritIdx) ?? s.spiritIdx + 1}
+                            </Badge>
+                            {/* The name sets this column's width rather than
+                                wrapping inside it: a name broken across two
+                                lines on every row of a run is far noisier than
+                                a slightly wider column, and the table already
+                                scrolls horizontally if it comes to that. Not
+                                truncation — nothing is hidden. */}
+                            {!sameSpirit && (
+                              <span className="text-[var(--sp-fg)] whitespace-nowrap">
+                                {spiritName(s.spiritIdx)}
+                              </span>
+                            )}
+                          </span>
+                        )}
                       </td>
                       <td className="py-1 px-2">
                         <div className="flex flex-wrap items-center gap-1">
@@ -114,17 +198,19 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                       </td>
                       <td className="py-1 px-2 text-xs whitespace-nowrap">
                         {s.gain > 0 ? (
-                          <span className="tabular-nums">
-                            <span className={GAIN}>
-                              {t('step_gain', { gain: formatFriendship(s.gain) })}
+                          <span className="flex flex-col gap-0.5 min-w-[9rem]">
+                            <span className="tabular-nums flex items-baseline gap-1">
+                              <span>
+                                {t('step_progress', {
+                                  after: formatFriendship(s.after),
+                                  req: formatFriendship(s.total),
+                                })}
+                              </span>
+                              <span className="text-[var(--sp-fg)] font-semibold">
+                                {t('step_gain', { gain: formatFriendship(s.gain) })}
+                              </span>
                             </span>
-                            <span className="text-muted-foreground mx-1">→</span>
-                            <span>
-                              {t('step_progress', {
-                                after: formatFriendship(s.after),
-                                req: s.required,
-                              })}
-                            </span>
+                            <FriendshipBar after={s.after} gain={s.gain} total={s.total} marks={s.marks} />
                           </span>
                         ) : (
                           <span className="text-muted-foreground">—</span>
@@ -139,13 +225,12 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                             <Badge key={`cl${lv}`} variant="order">{t('step_cleared', { lv })}</Badge>
                           ))}
                           {s.completes && s.spiritIdx !== null && (
-                            <Badge variant="buy">{t('badge_spirit_done', { name: spiritName(s.spiritIdx) })}</Badge>
+                            <Badge variant="milestone">{t('badge_spirit_done', { name: spiritName(s.spiritIdx) })}</Badge>
                           )}
-                          {s.ultimates.map(ui => (
-                            <Badge key={`u${ui}`} variant="default">
-                              {t('badge_ult_ready', { ord: ordinal(ui + 1) })}
-                            </Badge>
-                          ))}
+                          {/* No ultimate badge here — it belongs to the day, and
+                              lives in the date cell. This column stays for the
+                              milestones that really are per-step: a level
+                              cleared, a spirit finished. */}
                         </div>
                       </td>
                     </tr>

@@ -26,30 +26,131 @@
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
     --radius: 0.5rem;
+
+    /* Per-spirit identity ramps. Six, because MAX_SPIRITS is six; walked round
+       the wheel from red so no two neighbours collide. Each is a ramp, not a
+       colour: bg tints a row and fills a soft badge, br outlines it and fills
+       the accrued part of a bar, fg carries text, bar fills what a step just
+       added, and solid/on are the emphatic badge. solid is only *just* denser
+       than bg — a 1.07–1.13 luminance step — and the work of standing out is
+       done by the ink, which drops to the 900 rung, plus semibold weight. Two
+       earlier attempts overshot: a reversed 700 block, then a 200 ground, and
+       both pulled the eye to the badge's *background* instead of its text, so
+       a purchase read as a coloured rectangle before it read as a number. The
+       block should register as a step, not a shout (8.14–9.23:1 here). */
+    --s1-bg: #fef2f2; --s1-br: #fecaca; --s1-fg: #b91c1c; --s1-bar: #dc2626; --s1-solid: #fee2e2; --s1-on: #7f1d1d;
+    --s2-bg: #fffbeb; --s2-br: #fde68a; --s2-fg: #b45309; --s2-bar: #d97706; --s2-solid: #fef3c7; --s2-on: #78350f;
+    --s3-bg: #ecfdf5; --s3-br: #a7f3d0; --s3-fg: #047857; --s3-bar: #059669; --s3-solid: #d1fae5; --s3-on: #064e3b;
+    --s4-bg: #ecfeff; --s4-br: #a5f3fc; --s4-fg: #0e7490; --s4-bar: #0891b2; --s4-solid: #cffafe; --s4-on: #164e63;
+    --s5-bg: #eff6ff; --s5-br: #bfdbfe; --s5-fg: #1d4ed8; --s5-bar: #2563eb; --s5-solid: #dbeafe; --s5-on: #1e3a8a;
+    --s6-bg: #f5f3ff; --s6-br: #ddd6fe; --s6-fg: #6d28d9; --s6-bar: #7c3aed; --s6-solid: #ede9fe; --s6-on: #4c1d95;
+
+    /* The ultimate marker. Deliberately the only fully saturated fill in the
+       app: everything around it sits at 90–100% lightness and low chroma, so
+       prominence has to come from chroma, not from going dark. A dark block
+       reads as a hole in the table, which is what earlier attempts did. */
+    --ult-fill: #ffd400;
+    --ult-on: #3d2e00;
+    /* The same milestone worn by the *day* rather than the badge. Gold at its
+       real lightness (H46 S65 L52) cannot carry small text on white — 2.10:1 —
+       and darkening it until it can lands at L34, which stops looking like gold
+       and starts looking like mud. So the gold is the ground here and never the
+       ink: the cell takes a pale gold wash, the rule takes true gold, and the
+       day number stays in the page's own foreground where it is plainly legible.
+       The rule is reinforcement, not the statement — the ★ badge on the same day
+       says it outright — so it is free to be chosen for looking like gold. */
+    --ult-line: #d4af37;
+    --ult-day: #fff6d8;
   }
 
+  /* Dark foregrounds are deliberately not pure white. #fafafa on this ground
+     measures 19:1 — far past what any text needs, and the excess reads as glare
+     rather than clarity. 82% still clears everything comfortably (12.70 on the
+     page ground, 9.51 on secondary blocks, 11.15 on the palest row tint) while
+     emitting a third less light than white. The slight 240° cast keeps it in
+     the zinc family rather than sitting on the page as a flat grey.
+
+     Do not push it further without checking the *other* floor: muted-foreground
+     stays at 64.9%, and the two-tier text hierarchy rests on the gap between
+     them. At 82% that gap is 1.64×; by 78% it is 1.48× and primary and muted
+     text start reading as one tier. */
   .dark {
     --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    --foreground: 240 6% 82%;
     --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card-foreground: 240 6% 82%;
     --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
+    --popover-foreground: 240 6% 82%;
+    --primary: 240 6% 82%;
     --primary-foreground: 240 5.9% 10%;
     --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary-foreground: 240 6% 82%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
     --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent-foreground: 240 6% 82%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 240 6% 82%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
+
+    /* Same six hues, re-derived rather than inverted: bg is a deep tint mixed
+       toward the page ground so a tinted row does not read as a raised card,
+       and fg/bar move up the ramp to stay legible on it.
+
+       The emphatic badge cannot borrow the light theme's fix: here a *lighter*
+       ground would be louder, not quieter, so it sheds chroma instead (S 63–88%
+       down to 29–41%) at the same lightness rung. It sits 1.6–2.1× off the row
+       tint, enough to read as a distinct block without shouting (4.88–7.27:1).
+
+       Chroma is pulled back hard on everything that carries text — 60% of the
+       light-theme saturation, at 93% of the lightness. High-chroma light text
+       on a dark ground halates, and the page reads as glaring even when every
+       contrast ratio is nominally fine. The bar keeps more chroma (80%) than
+       the text does, because it has to stay legible as a *graphic* against
+       both the track and the accrued segment; cutting it as hard as the text
+       drops that below 3:1. Floors after the cut: text 4.83, graphics 3.47.
+
+       bg is cut furthest of all — down to a barely-hued dark band. It is the
+       one token that covers a *large* area, and large chromatic fields are
+       what made this table shimmer: the breakdown alternates untinted Dailies
+       rows with tinted spirit rows, so dozens of coloured bands stack up at a
+       regular pitch, and two spirits' blocks often abut directly. Opponent
+       hues meeting at similar luminance vibrate at the boundary no matter what
+       their contrast ratio says. Chroma belongs on small dense marks — the
+       swatch, the badge, the text, the bar — and those still carry identity
+       here, so the row tint only has to say "this row belongs to a spirit". */
+    --s1-bg: #1f1818; --s1-br: #7f1d1d; --s1-fg: #e4a0a0; --s1-bar: #ea7e7e; --s1-solid: #5c3333;  --s1-on: #edbbbb;
+    --s2-bg: #18160f; --s2-br: #78350f; --s2-fg: #d4b85e; --s2-bar: #e6b639; --s2-solid: #543828;  --s2-on: #e0cf8b;
+    --s3-bg: #111815; --s3-br: #065f46; --s3-fg: #75c8a7; --s3-bar: #44c395; --s3-solid: #1c4137;  --s3-on: #a1dcc1;
+    --s4-bg: #12191c; --s4-br: #155e75; --s4-fg: #71cbd6; --s4-bar: #36c4da; --s4-solid: #2c4a53;  --s4-on: #a0dde4;
+    --s5-bg: #1a1d25; --s5-br: #1e40af; --s5-fg: #92b8e2; --s5-bar: #6fa7eb; --s5-solid: #404e7c;  --s5-on: #b3cceb;
+    --s6-bg: #1e1b25; --s6-br: #5b21b6; --s6-fg: #b8ace8; --s6-bar: #ac96ef; --s6-solid: #5c4482;  --s6-on: #ccc4ef;
+
+    /* Unchanged: bright yellow on a near-black ground is exactly the one thing
+       that should draw the eye first. */
+    --ult-fill: #ffd400;
+    --ult-on: #3d2e00;
+    /* Gold reads as gold on a dark ground without any help, so it keeps its
+       real lightness here; the wash just warms the cell. */
+    --ult-line: #cba63e;
+    --ult-day: #2e2508;
   }
 }
+
+/* Deliberately outside @layer — Tailwind purges class selectors it cannot find
+   in the source, and these names are built as `spirit-${n}` at runtime, so it
+   never sees them and would strip the whole block.
+
+   Applied to any subtree that belongs to one spirit; everything inside then
+   reads --sp-* without knowing which spirit it is. */
+.spirit-1 { --sp-bg: var(--s1-bg); --sp-br: var(--s1-br); --sp-fg: var(--s1-fg); --sp-bar: var(--s1-bar); --sp-solid: var(--s1-solid); --sp-on: var(--s1-on); }
+.spirit-2 { --sp-bg: var(--s2-bg); --sp-br: var(--s2-br); --sp-fg: var(--s2-fg); --sp-bar: var(--s2-bar); --sp-solid: var(--s2-solid); --sp-on: var(--s2-on); }
+.spirit-3 { --sp-bg: var(--s3-bg); --sp-br: var(--s3-br); --sp-fg: var(--s3-fg); --sp-bar: var(--s3-bar); --sp-solid: var(--s3-solid); --sp-on: var(--s3-on); }
+.spirit-4 { --sp-bg: var(--s4-bg); --sp-br: var(--s4-br); --sp-fg: var(--s4-fg); --sp-bar: var(--s4-bar); --sp-solid: var(--s4-solid); --sp-on: var(--s4-on); }
+.spirit-5 { --sp-bg: var(--s5-bg); --sp-br: var(--s5-br); --sp-fg: var(--s5-fg); --sp-bar: var(--s5-bar); --sp-solid: var(--s5-solid); --sp-on: var(--s5-on); }
+.spirit-6 { --sp-bg: var(--s6-bg); --sp-br: var(--s6-br); --sp-fg: var(--s6-fg); --sp-bar: var(--s6-bar); --sp-solid: var(--s6-solid); --sp-on: var(--s6-on); }
 
 @layer base {
   * {
