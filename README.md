@@ -28,7 +28,7 @@ src/
   data/seasons.ts           SEASONS array — add new seasons here
   i18n/
     index.ts                t(), setLang(), LANGS, formatDate, ordinal
-    en.ts, zh-CN.ts, bn.ts  per-language translations + ordinal rules
+    en.ts, zh-CN.ts          per-language translations + ordinal rules
   lib/
     solver.ts               enumSpirit + solve (pure, no React)
     schedule.ts             buildSchedule — per-day event log (pure, no React)
@@ -118,7 +118,7 @@ claimable — are badged inline.
 
 ## Internationalization
 
-Currently available: **English**, **Simplified Chinese (简体中文)**, **Bengali (বাংলা)**. The selected language is persisted to `localStorage`.
+Currently available: **English**, **Simplified Chinese (简体中文)**. The selected language is persisted to `localStorage`.
 
 To add a new language:
 

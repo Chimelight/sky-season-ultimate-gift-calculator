@@ -53,9 +53,16 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
   // paid for it. Candles bought it (reversed block) or a day did (quiet block).
   function eventBadge(s: Step) {
     if (s.kind === 'collect') return <Badge variant="secondary">{t('step_collect')}</Badge>
-    if (s.kind === 'invite') return <Badge variant="soft">{t('step_invite', { lv: s.lvl })}</Badge>
+    // `s.lvl` still carries the level the spirit is genuinely on, and
+    // check-model still pins it — it is just not shown, because it describes
+    // the spirit's state rather than the action.
+    if (s.kind === 'invite') return <Badge variant="soft">{t('step_invite')}</Badge>
+    // font-normal overrides the variant's semibold: in a table this long the
+    // emphasis a purchase needs is already carried by its denser ground and
+    // darker ink, and bold on top of that turns every buy row into a shout.
+    // The strategy table keeps the weight — there the badges *are* the content.
     return (
-      <Badge variant="buy">
+      <Badge variant="buy" className="font-normal">
         {s.kind === 'heart'
           ? t('badge_item_heart', { c: -s.candles })
           : t('badge_item_buy', { lv: s.lvl, c: -s.candles })}
@@ -66,6 +73,9 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
   return (
     <div className="space-y-2">
       <h3 id="daily-heading" className="text-sm font-semibold">{t('section_daily')}</h3>
+      {/* Badges here never wrap: the table scrolls horizontally, so a wrapped
+          two-line badge buys nothing and costs row rhythm — and the badge base
+          centres its text, which looks wrong the moment a second line appears. */}
       <div className="overflow-x-auto -mx-4 px-4">
         <table aria-labelledby="daily-heading" className="w-full min-w-[48rem] text-sm border-collapse">
           <thead>
@@ -107,10 +117,6 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                           // coincide — that is the marker the table gets opened
                           // for — but the wash and badge stay, so the milestone
                           // is never lost.
-                          //
-                          // nowrap is on the day and date lines rather than the
-                          // cell, so the badge is free to wrap instead of
-                          // widening this column on every row of the plan.
                           className={`py-1 pr-2 align-top border-r ${
                             r.ultimates.length > 0 ? 'bg-[var(--ult-day)]' : ''
                           } ${
@@ -138,7 +144,7 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                             <Badge
                               key={`u${ui}`}
                               variant="ult"
-                              className="mt-1"
+                              className="mt-1 whitespace-nowrap"
                               title={t('badge_ult_ready', { ord: ordinal(ui + 1) })}
                             >
                               ★ {t('badge_ult_short', { ord: ordinal(ui + 1) })}
@@ -221,11 +227,18 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                           {s.kind === 'collect' && r.day === 1 && rules.pass > 0 && (
                             <Badge variant="secondary">{t('badge_pass', { pass: rules.pass })}</Badge>
                           )}
-                          {s.cleared.map(lv => (
-                            <Badge key={`cl${lv}`} variant="order">{t('step_cleared', { lv })}</Badge>
+                          {/* Paired by index: cleared[k] is the threshold just
+                              met, unlocked[k] the tier it opened. check-model
+                              pins the two arrays to the same length. */}
+                          {s.cleared.map((lv, k) => (
+                            <Badge key={`lu${lv}`} variant="order" className="font-normal whitespace-nowrap">
+                              {t('step_level_up', { from: lv, to: s.unlocked[k] })}
+                            </Badge>
                           ))}
                           {s.completes && s.spiritIdx !== null && (
-                            <Badge variant="milestone">{t('badge_spirit_done', { name: spiritName(s.spiritIdx) })}</Badge>
+                            <Badge variant="milestone" className="whitespace-nowrap">
+                              {t('badge_spirit_done', { name: spiritName(s.spiritIdx) })}
+                            </Badge>
                           )}
                           {/* No ultimate badge here — it belongs to the day, and
                               lives in the date cell. This column stays for the
