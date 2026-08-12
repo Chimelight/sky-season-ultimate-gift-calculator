@@ -10,14 +10,14 @@ npm run dev
 # then open http://localhost:5173
 ```
 
-Build for production:
+Build for production — and the only real typecheck, since `tsc -b` uses the project references that `tsc --noEmit` skips:
 ```bash
 npm run build
 ```
 
 Checks:
 ```bash
-npm run check:model       # friendship/day arithmetic in src/lib/solver.ts
+npm run check:model       # friendship/day arithmetic + redemption order, in src/lib/solver.ts
 npm run check:responsive  # viewport × language layout regression (needs Playwright browsers)
 ```
 
@@ -42,6 +42,7 @@ React + TypeScript SPA, built with Vite. UI components from shadcn/ui (Radix UI 
 - `src/lib/schedule.ts` — `buildSchedule`: expands a solved plan into `DayRow[]`, each holding the ordered `Step[]` for that day (dailies / invite / buy / heart, with candles, running balance, friendship progress and milestones); `formatFriendship` trims the fractional values. Each `Step` also carries `total` and `marks` — that spirit's final cumulative requirement and each level's threshold — so the progress bar can be drawn on one scale for the whole run. Both are per spirit, not global: a strategy that skips a level entirely never owes that level's friendship
 - `src/lib/helpers.ts` — `shortName`, `addDays`, `describeOpt`
 - `src/lib/spiritTheme.ts` — `spiritClass(idx)`: maps a spirit onto one of the six identity ramps (see Colors)
+- `src/hooks/useDragOrder.ts` — `useDragOrder(count, onDrop)`: pointer + keyboard reordering for a vertical list (see Redemption order)
 - `src/lib/utils.ts` — `cn()` (clsx + tailwind-merge)
 
 ### State (`src/context/`)
@@ -57,12 +58,13 @@ config/SeasonConfig.tsx    — season name + start date
 config/RulesCard.tsx       — cpd/pass/heart + friendship-per-level
 spirits/SpiritCard.tsx     — single spirit card; levels run Lv4→Lv1 to match the tree map, per-level +/− in edit mode
 spirits/SpiritsSection.tsx — spirit grid + add button
-ultimates/UltimatesSection.tsx — ultimate list + summary
+ultimates/UltimatesSection.tsx — ultimate list in redemption order (draggable) + prioritize + summary
 result/ResultSection.tsx   — runs solve(), distributes result to sub-components
 result/MetricsSummary.tsx  — Day/Candle metric cards
 result/StrategyTable.tsx   — per-spirit Lv1–4 strategy table with Buy/Skip badges
 result/TreeMap.tsx         — SVG tree map (bottom-up, used spirits only); colours come from CSS vars, so it takes no theme prop
 result/DailyTable.tsx      — one row per event from buildSchedule(), date cell spans the day, milestone badges
+result/UltimateTimeline.tsx— every ultimate on one day axis, with today; shows the spacing the metric cards cannot
 result/FriendshipBar.tsx   — the two-segment progress bar: already-held vs what this step added, ticked at level thresholds
 result/DiscordPost.tsx     — copyable Discord post textarea + copy button
 ```
@@ -74,6 +76,15 @@ result/DiscordPost.tsx     — copyable Discord post textarea + copy button
 **Core algorithm** (`src/lib/solver.ts`): For each spirit, `enumSpirit` enumerates all buy/skip combinations across 4 levels and prunes Pareto-dominated strategies (cost vs. invite days). `solve` combines per-spirit strategies to find the globally optimal plan given a candle budget and target ultimate.
 
 **Friendship model**: Friendship has two interchangeable sources — buying items (spends candles) and daily invites (spends days) — and selecting the mix is the optimization this app performs. A level is worth `rules.l{n}f` friendship, split evenly across however many items it holds (so 3 items pay `8/3` each); invites pay 1/day. Do not describe invites as "filling the gap left by items": neither source is primary, and that framing misstates the problem. Friendship never resets, so thresholds are cumulative and fractional surplus carries into later levels — invite days come from a running maximum over the per-level deficits, *not* a per-level sum. `LevelOpt.days` is the increment attributed to that level, which is why the increments still add up to `Strategy.days`. A level may hold any number of items; there is no half/full-skip special case. Guard the arithmetic with `npm run check:model` — it covers the fractional carry and the `3 * (8/3) === 7.999…` float trap.
+
+**Redemption order**: `state.ultimates` is ordered by *when the player intends to redeem*, which is what the solver has always consumed — `cumHearts` is a prefix sum over that array, so putting a gift first makes it owe only its own hearts. Reordering therefore needed no solver change at all; the array order was already the claim order, nobody could just change it. Seasons used to unlock their quests one at a time, forcing the season's own order; a season that unlocks them all at once does not, and rather than model that per season, the list is simply draggable everywhere and the player decides what is legal.
+
+Two rules keep it honest:
+
+- **`PlannedUltimate.id` is the gift; the array index is only its place in the queue.** Every label — the card rows, MetricsSummary, the daily table badge, the Discord post — must render `ultimates[pos].id`, never the position. Rendering the position makes a reordered plan silently renumber, so it describes a different gift while looking correct. `ADD_ULTIMATE` takes the next unused id rather than the array length, and `SET_ULTIMATE_HEARTS` must spread the existing entry — dropping `id` there was a real bug the build caught.
+- **`targetIdx` is a position, so `MOVE_ULTIMATE` has to carry it.** It follows the gift it pointed at; without that, dragging silently re-targets the plan.
+
+`useDragOrder` (`src/hooks/useDragOrder.ts`) drives it with pointer events, not HTML5 drag-and-drop, which has no usable touch story. The commit happens outside the state updater: updaters are pure and StrictMode calls them twice, so dispatching from inside fired the move twice and the two cancelled out. Arrow keys on the handle do the same job — dragging alone would lock out keyboard users on a row whose other control is a radio.
 
 **Edit Mode**: Season data is read-only on load — a first-time user should read a plan, not face a wall of inputs. `editing` (in `StateContext`) gates every config control: SeasonConfig, RulesCard, spirit cards, ultimate heart counts, and the add/remove buttons all swap between `Input` and `StaticField` (`src/components/ui/static-field.tsx`, which matches the `h-8` control height so toggling does not reflow). The "prioritize" radio in UltimatesSection stays live in both modes — it selects which result to optimize for, so it is a query, not season data.
 

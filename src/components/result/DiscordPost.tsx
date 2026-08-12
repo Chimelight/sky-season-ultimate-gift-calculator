@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button'
 import { useI18n } from '@/context/I18nContext'
 import { useAppState } from '@/context/StateContext'
 import { genPost } from '@/lib/genPost'
-import type { Rules, Spirit } from '@/data/seasons'
+import type { PlannedUltimate, Rules, Spirit } from '@/data/seasons'
 import type { SolveResult } from '@/lib/solver'
 
-export function DiscordPost({ result, spirits, rules }: { result: SolveResult; spirits: Spirit[]; rules: Rules }) {
+export function DiscordPost({ result, spirits, rules, ultimates }: {
+  result: SolveResult; spirits: Spirit[]; rules: Rules; ultimates: PlannedUltimate[]
+}) {
   const { t, lang } = useI18n()
   const { state } = useAppState()
   const [copied, setCopied] = useState(false)
@@ -21,6 +23,7 @@ export function DiscordPost({ result, spirits, rules }: { result: SolveResult; s
     best: result.best,
     cumHearts: result.cumHearts,
     targetIdx: result.targetIdx,
+    ultimates,
     lang,
     t,
   })

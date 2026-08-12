@@ -7,7 +7,7 @@ import { buildSchedule, formatFriendship } from '@/lib/schedule'
 import { spiritClass } from '@/lib/spiritTheme'
 import { FriendshipBar } from './FriendshipBar'
 import type { Step } from '@/lib/schedule'
-import type { Rules, Spirit } from '@/data/seasons'
+import type { PlannedUltimate, Rules, Spirit } from '@/data/seasons'
 import type { SolveResult } from '@/lib/solver'
 
 // Candles are the one column with a direction, and it is the same direction for
@@ -18,7 +18,9 @@ import type { SolveResult } from '@/lib/solver'
 const GAIN = 'text-green-700 dark:text-green-400'
 const SPEND = 'text-rose-700 dark:text-rose-400'
 
-export function DailyTable({ result, spirits, rules }: { result: SolveResult; spirits: Spirit[]; rules: Rules }) {
+export function DailyTable({ result, spirits, rules, ultimates }: {
+  result: SolveResult; spirits: Spirit[]; rules: Rules; ultimates: PlannedUltimate[]
+}) {
   const { t, ordinal, formatDate } = useI18n()
   const { state } = useAppState()
 
@@ -39,6 +41,9 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
     try { return formatDate(addDays(state.startDate, n - 1)) } catch { return '—' }
   }
   const spiritName = (i: number) => spirits[i]?.name || t('spirit_name_default', { n: i + 1 })
+  // Schedule steps carry the *position* in the redemption order; the reader
+  // needs the gift's own number, which reordering must not renumber.
+  const ultOrd = (pos: number) => ordinal((ultimates[pos]?.id ?? pos) + 1)
 
   // #N is position in the plan, the same number the strategy table and tree map
   // use — not the spirit's index in the season, which would be a second, silently
@@ -145,9 +150,9 @@ export function DailyTable({ result, spirits, rules }: { result: SolveResult; sp
                               key={`u${ui}`}
                               variant="ult"
                               className="mt-1 whitespace-nowrap"
-                              title={t('badge_ult_ready', { ord: ordinal(ui + 1) })}
+                              title={t('badge_ult_ready', { ord: ultOrd(ui) })}
                             >
-                              ★ {t('badge_ult_short', { ord: ordinal(ui + 1) })}
+                              ★ {t('badge_ult_short', { ord: ultOrd(ui) })}
                             </Badge>
                           ))}
                         </td>

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useReducer, useState, type ReactNode } from 'react'
-import { SEASONS, type Spirit, type Ultimate, type Rules, type Season } from '@/data/seasons'
+import { SEASONS, type Spirit, type PlannedUltimate, type Rules, type Season } from '@/data/seasons'
 import { clearPersisted, findSeason, loadPersisted, savePersisted } from '@/lib/persist'
 
 export interface AppState {
@@ -7,7 +7,9 @@ export interface AppState {
   startDate: string
   rules: Rules
   spirits: Spirit[]
-  ultimates: Ultimate[]
+  /** In redemption order, which is what the solver reads. See PlannedUltimate. */
+  ultimates: PlannedUltimate[]
+  /** Position in `ultimates`, not the season's own numbering. */
   targetIdx: number
   /** The SEASONS entry this was loaded from, so the picker can resync. */
   seasonId: string
@@ -25,7 +27,7 @@ function cloneSeason(s: Season): AppState {
     startDate: s.startDate,
     rules: { ...s.rules },
     spirits: s.spirits.map(sp => ({ name: sp.name, levels: sp.levels.map(l => l.slice()) })),
-    ultimates: s.ultimates.map(u => ({ ...u })),
+    ultimates: s.ultimates.map((u, id) => ({ ...u, id })),
     targetIdx: s.targetIdx ?? 0,
     seasonId: s.id,
     dirty: false,
@@ -38,7 +40,7 @@ function pristineState(): AppState {
     startDate: new Date().toISOString().slice(0, 10),
     rules: { cpd: 6, pass: 30, heart: 3, l1f: 4, l2f: 6, l3f: 8, l4f: 10 },
     spirits: [{ name: 'Spirit 1', levels: [[4], [19, 7], [24, 10], [28]] }],
-    ultimates: [{ hearts: 2 }],
+    ultimates: [{ hearts: 2, id: 0 }],
     targetIdx: 0,
     seasonId: '',
     dirty: false,
@@ -72,6 +74,7 @@ type Action =
   | { type: 'ADD_ULTIMATE' }
   | { type: 'REMOVE_ULTIMATE'; idx: number }
   | { type: 'SET_TARGET_IDX'; idx: number }
+  | { type: 'MOVE_ULTIMATE'; from: number; to: number }
   | { type: 'LOAD_SEASON'; season: Season }
 
 const MAX_SPIRITS = 6
@@ -129,11 +132,15 @@ function applyAction(state: AppState, action: Action): AppState {
       return { ...state, spirits: state.spirits.filter((_, i) => i !== action.idx) }
     }
     case 'SET_ULTIMATE_HEARTS': {
-      const ultimates = state.ultimates.map((u, i) => i === action.idx ? { hearts: Math.max(0, action.value) } : u)
+      const ultimates = state.ultimates.map((u, i) => i === action.idx ? { ...u, hearts: Math.max(0, action.value) } : u)
       return { ...state, ultimates }
     }
-    case 'ADD_ULTIMATE':
-      return { ...state, ultimates: [...state.ultimates, { hearts: 1 }] }
+    case 'ADD_ULTIMATE': {
+      // Ids identify a gift, so a new one takes the next unused number rather
+      // than its array position, which reordering would have made meaningless.
+      const id = state.ultimates.reduce((m, u) => Math.max(m, u.id), -1) + 1
+      return { ...state, ultimates: [...state.ultimates, { hearts: 1, id }] }
+    }
     case 'REMOVE_ULTIMATE': {
       if (state.ultimates.length <= 1) return state
       const ultimates = state.ultimates.filter((_, i) => i !== action.idx)
@@ -142,6 +149,18 @@ function applyAction(state: AppState, action: Action): AppState {
     }
     case 'SET_TARGET_IDX':
       return { ...state, targetIdx: action.idx }
+    case 'MOVE_ULTIMATE': {
+      const { from } = action
+      const to = Math.max(0, Math.min(action.to, state.ultimates.length - 1))
+      if (from === to || from < 0 || from >= state.ultimates.length) return state
+      const ultimates = state.ultimates.slice()
+      ultimates.splice(to, 0, ultimates.splice(from, 1)[0])
+      // targetIdx is a position, so it has to follow the gift it was pointing
+      // at — otherwise dragging silently re-targets the plan at a different one.
+      const targetId = state.ultimates[state.targetIdx]?.id
+      const targetIdx = Math.max(0, ultimates.findIndex(u => u.id === targetId))
+      return { ...state, ultimates, targetIdx }
+    }
     case 'LOAD_SEASON':
       return cloneSeason(action.season)
     default:
