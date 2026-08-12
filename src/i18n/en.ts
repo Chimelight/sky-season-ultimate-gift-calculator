@@ -33,6 +33,7 @@ export const translations = {
   ult_nth: '{ord} Ultimate',
   ult_season_hearts: 'Seasonal Hearts',
   ult_prioritize: 'Prioritize',
+  ult_reorder: "Drag to reorder {ord} Ultimate, or use the arrow keys",
   ult_remove: 'Remove',
   ult_summary: 'Cumulative hearts at each Ultimate: {cumStr}. Plan completes {done} / {total} spirits. Optimizing for: <b>{ultNth}</b> (Earliest Available).',
   ult_summary_empty: 'Add at least one ultimate gift.',
@@ -55,6 +56,7 @@ export const translations = {
   section_treemap: 'Tree Map (Bottom-up, Used Spirits Only)',
   legend_buy: 'Buy',
   legend_skip: 'Friendship-skip',
+  section_timeline: "Timeline",
   section_daily: "Daily Breakdown",
   th_day: "Day",
   th_balance: "Balance",
@@ -63,17 +65,27 @@ export const translations = {
   th_candles: "Candles",
   th_friendship: "Friendship",
   step_collect: "Dailies",
-  step_invite: "Lv{lv} invite",
+  // No level: an invite is one action a day worth +1, the same at every
+  // level. The level a buy or skip carries is the item's own tier, which is
+  // real; the level an invite would carry is just where the spirit currently
+  // stands, and the friendship column already shows that.
+  step_invite: "Invite",
   step_gain: "+{gain}",
   step_progress: "{after} / {req}",
-  step_cleared: "Lv{lv} reached",
+  // A transition, which sidesteps having to pick a verb at all. "Reached" was
+  // ambiguous and "complete" was false — a level's own items can be skipped,
+  // so meeting its friendship threshold does not mean owning it. The arrow
+  // states only what happened: this threshold is behind us, that tier is open.
+  step_level_up: "Lv{from} → Lv{to}",
   badge_item_buy: "Lv{lv} buy {c}C",
   badge_item_skip: "Lv{lv} skip {c}C",
   badge_item_heart: "Lv5 heart {c}C",
   badge_pass: "Season Pass +{pass}C",
   badge_today: "Today",
-  badge_spirit_done: "{name} complete",
+  badge_spirit_done: "{name} Complete",
   badge_ult_ready: "{ord} Ultimate claimable",
+  // Short form for the date cell, which is otherwise a two-line column
+  badge_ult_short: "{ord} Ultimate",
   note_daily: "Each day is expanded in the order things happen. Buying an item and inviting both add friendship; reaching a level's cumulative requirement unlocks the next. A purchase settles on the day its candles are available.",
   section_discord: 'Discord Post',
   btn_copy: 'Copy',
@@ -107,13 +119,13 @@ export const translations = {
   post_lv5: '  Lv 5: Buy Heart ({heart}C)',
   post_skipped: '_Skipped Entirely: {names} (Not Needed)._',
   post_schedule_header: '**Invite Schedule** (1 invite/day, sequential)',
-  post_sched_invites: "{dayStr}: invite {name} (Lv {lv}) x{n}",
+  post_sched_invites: "{dayStr}: invite {name} x{n}",
   post_sched_line: "{dayStr}: {actions}",
-  post_act_invite: "invite {name} (Lv {lv})",
+  post_act_invite: "invite {name}",
   post_act_buy: "buy {name} Lv{lv} {c}C",
   post_act_heart: "buy {name} Lv5 heart {c}C",
   post_act_skip: "skip Lv{lv} {c}C",
-  post_act_cleared: "Lv{lv} reached",
+  post_act_level_up: "Lv{from} -> Lv{to}",
   post_act_complete: "** {name} COMPLETE **",
   post_act_ult: "** {ord} ULTIMATE READY ({date}) **",
   post_day_single: 'Day {day}',

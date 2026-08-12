@@ -22,6 +22,18 @@ export interface Ultimate {
   hearts: number
 }
 
+/**
+ * An ultimate once it is part of a plan. The array's *order* is the order the
+ * player intends to redeem in — which is what the solver has always consumed,
+ * since cumHearts is a prefix sum over it — so reordering is the whole feature.
+ * `id` is the ultimate's position in the season, kept so that a row still reads
+ * "3rd Ultimate" after it has been dragged to the top. Without it the labels
+ * would silently renumber and the plan would describe a different gift.
+ */
+export interface PlannedUltimate extends Ultimate {
+  id: number
+}
+
 export interface Season {
   id: string
   label: string

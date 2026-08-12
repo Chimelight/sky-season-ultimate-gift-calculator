@@ -1,4 +1,4 @@
-import { SEASONS, type Rules, type Season, type Spirit, type Ultimate } from '@/data/seasons'
+import { SEASONS, type PlannedUltimate, type Rules, type Season, type Spirit } from '@/data/seasons'
 
 const KEY = 'sky-calc-state'
 /** Bump whenever the stored shape changes; a mismatch is discarded, not migrated. */
@@ -9,7 +9,7 @@ export interface PersistedShape {
   startDate: string
   rules: Rules
   spirits: Spirit[]
-  ultimates: Ultimate[]
+  ultimates: PlannedUltimate[]
   targetIdx: number
   /** Which SEASONS entry this started from, so the picker can resync. */
   seasonId: string
@@ -47,9 +47,19 @@ function sanitize(raw: unknown): PersistedShape | null {
     }))
   if (spirits.length === 0) return null
 
-  const ultimates: Ultimate[] = o.ultimates
+  // Ids come back from storage but cannot be trusted: a duplicate or a gap
+  // would make two rows claim to be the same gift, or a label point at nothing.
+  // Anything not a clean unique number falls back to the array position, which
+  // is what the ids meant before reordering existed.
+  const seen = new Set<number>()
+  const ultimates: PlannedUltimate[] = o.ultimates
     .filter((u): u is Record<string, unknown> => !!u && typeof u === 'object')
-    .map(u => ({ hearts: Math.max(0, num(u.hearts)) }))
+    .map((u, i) => {
+      const raw = num(u.id, -1)
+      const id = Number.isInteger(raw) && raw >= 0 && !seen.has(raw) ? raw : i
+      seen.add(id)
+      return { hearts: Math.max(0, num(u.hearts)), id }
+    })
   if (ultimates.length === 0) return null
 
   return {

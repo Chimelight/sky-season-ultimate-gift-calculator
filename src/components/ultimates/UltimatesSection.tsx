@@ -1,14 +1,18 @@
-import { Fragment } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, GripVertical } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/context/I18nContext'
 import { useAppState } from '@/context/StateContext'
+import { useDragOrder } from '@/hooks/useDragOrder'
 
 export function UltimatesSection() {
   const { t, ordinal } = useI18n()
   const { state, dispatch, editing } = useAppState()
+  // Reordering is a *query*, like prioritize: it says which order you intend to
+  // redeem in, not what the season contains. So it stays live outside edit mode.
+  const drag = useDragOrder(state.ultimates.length, (from, to) =>
+    dispatch({ type: 'MOVE_ULTIMATE', from, to }))
 
   let acc = 0
   const cumHearts = state.ultimates.map(u => (acc += Math.max(0, u.hearts || 0)))
@@ -34,13 +38,30 @@ export function UltimatesSection() {
 
       <Card>
         <CardContent>
-          <div className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3 gap-y-1.5 items-center">
+          <div data-list className="flex flex-col gap-y-1.5">
             {state.ultimates.map((u, idx) => (
-              <Fragment key={idx}>
-                <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  {t('ult_nth', { ord: ordinal(idx + 1) })}
+              <div
+                key={u.id}
+                data-row
+                {...drag.rowProps(idx)}
+                className={`flex items-center flex-wrap gap-x-3 gap-y-1.5 rounded-md px-1 -mx-1 ${
+                  drag.dragging === idx ? 'bg-card shadow-lg' : ''
+                }`}
+              >
+                <button
+                  type="button"
+                  data-handle
+                  {...drag.handleProps(idx)}
+                  aria-label={t('ult_reorder', { ord: ordinal(u.id + 1) })}
+                  title={t('ult_reorder', { ord: ordinal(u.id + 1) })}
+                  className="shrink-0 h-8 w-5 -ml-1 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <GripVertical className="h-3.5 w-3.5" />
+                </button>
+                <span className="text-sm text-muted-foreground whitespace-nowrap shrink-0">
+                  {t('ult_nth', { ord: ordinal(u.id + 1) })}
                 </span>
-                <div className="flex items-center flex-wrap gap-x-3 gap-y-1.5">
+                <div className="flex items-center flex-wrap gap-x-3 gap-y-1.5 grow">
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground shrink-0">+</span>
                     {editing ? (
@@ -80,7 +101,7 @@ export function UltimatesSection() {
                     )}
                   </div>
                 </div>
-              </Fragment>
+              </div>
             ))}
           </div>
           <div className="pt-2">
@@ -92,7 +113,8 @@ export function UltimatesSection() {
                       cumStr: cumHearts.join(', '),
                       done: total,
                       total: state.spirits.length,
-                      ultNth: t('ult_nth', { ord: ordinal(tIdx + 1) }),
+                      // tIdx is a position; the reader needs the gift's own number.
+                      ultNth: t('ult_nth', { ord: ordinal((state.ultimates[tIdx]?.id ?? tIdx) + 1) }),
                     })
                   : t('ult_summary_empty'),
               }}

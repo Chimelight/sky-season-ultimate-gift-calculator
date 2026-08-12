@@ -1,19 +1,17 @@
 import { translations as en, ordinal as ordinalEn, dateLocale as dateLocaleEn } from './en'
 import { translations as zhCN, ordinal as ordinalZhCN, dateLocale as dateLocaleZhCN } from './zh-CN'
-import { translations as bn, ordinal as ordinalBn, dateLocale as dateLocaleBn } from './bn'
 
 export type TranslationKey = keyof typeof en
 
 type Translations = Record<string, string>
 
-const TRANSLATIONS: Record<string, Translations> = { en, 'zh-CN': zhCN, bn }
-const ORDINALS: Record<string, (n: number) => string> = { en: ordinalEn, 'zh-CN': ordinalZhCN, bn: ordinalBn }
-const DATE_LOCALES: Record<string, string> = { en: dateLocaleEn, 'zh-CN': dateLocaleZhCN, bn: dateLocaleBn }
+const TRANSLATIONS: Record<string, Translations> = { en, 'zh-CN': zhCN }
+const ORDINALS: Record<string, (n: number) => string> = { en: ordinalEn, 'zh-CN': ordinalZhCN }
+const DATE_LOCALES: Record<string, string> = { en: dateLocaleEn, 'zh-CN': dateLocaleZhCN }
 
 export const LANGS = [
   { code: 'en', label: 'English' },
   { code: 'zh-CN', label: '中文(简体)' },
-  { code: 'bn', label: 'বাংলা' },
 ]
 
 export function t(lang: string, key: string, vars?: Record<string, string | number>): string {

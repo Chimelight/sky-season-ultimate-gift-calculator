@@ -180,6 +180,68 @@ for (const season of SEASONS) {
     const byLvl = Object.fromEntries(reqs.map(x => [x.lvl, x.cumReq]))
     check(`${nm} invite labels match the level in progress`,
       mine.filter(s => s.kind === 'invite' && s.required !== byLvl[s.lvl]).length, 0)
+
+    // `unlocked` is what the reader is told just became buyable, so it has to be
+    // the next level that actually exists — not cleared+1, which a season with
+    // an empty level would make a lie — and the last one has to name the Lv5
+    // heart, whose entry requirement is the full cumulative total.
+    const present = reqs.map(x => x.lvl)
+    const expectedUnlock = lvl => present[present.indexOf(lvl) + 1] ?? 5
+    const unlockPairs = mine.flatMap(s => s.cleared.map((lvl, k) => [lvl, s.unlocked[k]]))
+    check(`${nm} unlocked names the next level that exists`,
+      unlockPairs.filter(([lvl, got]) => got !== expectedUnlock(lvl)).length, 0)
+    check(`${nm} every cleared level reports exactly one unlock`,
+      mine.filter(s => s.cleared.length !== s.unlocked.length).length, 0)
+    // Whatever it names must be a level the spirit can now afford to enter.
+    check(`${nm} the unlocked level is genuinely reachable when announced`,
+      mine.filter(s => s.unlocked.some(lv => s.after < entryReq(lv) - 1e-9)).length, 0)
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Redemption order. The ultimates array *is* the order the player intends to
+// redeem in — cumHearts is a prefix sum over it — so reordering needs no solver
+// change. What has to hold is that the meaning does not drift: the identity
+// order must still produce what it always did, and a gift moved to the front
+// must owe only its own hearts rather than everything ahead of it.
+// ---------------------------------------------------------------------------
+for (const season of SEASONS) {
+  const nm = season.id
+  const H = season.ultimates.map(u => Math.max(0, +u.hearts || 0))
+  const identity = [...H.keys()]
+  const solveOrder = (order, tPos) =>
+    solve(season.spirits, order.map(i => ({ hearts: H[i] })), season.rules, tPos)
+
+  const basis = solveOrder(identity, 0)
+  if (basis.errorKey) continue
+
+  check(`${nm} cumHearts is the prefix sum of the order given`,
+    JSON.stringify(basis.cumHearts),
+    JSON.stringify(H.reduce((a, h) => (a.push((a.at(-1) ?? 0) + h), a), [])))
+
+  for (let t = 0; t < H.length; t++) {
+    const moved = [t, ...identity.filter(i => i !== t)]
+    const r = solveOrder(moved, 0)
+    if (r.errorKey) continue
+
+    // The whole point: first in line owes only itself.
+    check(`${nm} ult ${t + 1} moved first owes only its own hearts`, r.cumHearts[0], H[t])
+    // And it can never land later than it did when it had to queue.
+    check(`${nm} ult ${t + 1} moved first is never later than in order`,
+      r.best.Ts[0] <= basis.best.Ts[t], true)
+    // Hearts are spent, so the full clear still costs the same total.
+    check(`${nm} ult ${t + 1} reordering does not change the total hearts owed`,
+      r.cumHearts.at(-1), basis.cumHearts.at(-1))
+  }
+
+  // Position k of Ts belongs to the gift at position k of the array passed in.
+  // Every label in the app depends on this, and nothing else enforces it.
+  const rot = [...identity.slice(1), identity[0]]
+  const rotated = solveOrder(rot, 0)
+  if (!rotated.errorKey) {
+    check(`${nm} cumHearts follows the array it was given, not the season order`,
+      JSON.stringify(rotated.cumHearts),
+      JSON.stringify(rot.reduce((a, i) => (a.push((a.at(-1) ?? 0) + H[i]), a), [])))
   }
 }
 

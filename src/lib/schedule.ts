@@ -21,8 +21,28 @@ export interface Step {
   after: number
   /** Cumulative friendship the level being worked on needs. */
   required: number
-  /** Levels this step pushed past, in order. */
+  /**
+   * Friendship the spirit needs in total, so a bar can be drawn on one scale
+   * for the whole run rather than rescaling at every level. Per spirit, not
+   * global: a strategy that skips a level entirely never owes that level's
+   * friendship, so its total is genuinely smaller.
+   */
+  total: number
+  /** Cumulative threshold of each level the spirit actually has, for ticks. */
+  marks: readonly number[]
+  /** Levels whose cumulative threshold this step met, in order. */
   cleared: number[]
+  /**
+   * The levels those thresholds opened — what the player can actually act on.
+   * Not `cleared + 1`: a season may leave a level with no items at all, and
+   * that level never enters the chain. The last one opens Lv5, the heart,
+   * whose entryReq is the full cumulative total.
+   *
+   * Kept beside `cleared` rather than replacing it because the two are not
+   * interchangeable — a level's threshold can be met with its own items
+   * skipped, so meeting it is not the same as owning that level.
+   */
+  unlocked: number[]
   /** Items given up, tagged with the level whose clearing gave them up. */
   skips: { lvl: number; cost: number }[]
   /** Set on the step that finishes the spirit. */
@@ -261,6 +281,9 @@ export function buildSchedule(result: SolveResult, rules: Rules): DayRow[] {
     const days = [...new Set([...myInvites.map(v => v.day), ...myGroups.map(g => g.day)])].sort((a, b) => a - b)
 
     const mySkips = skipsAt.get(spiritIdx) ?? new Map<number, number[]>()
+    // Shared by every step of this spirit: the bar's scale and its tick marks.
+    const total = levelReqs[levelReqs.length - 1]?.cumReq ?? 0
+    const marks: readonly number[] = levelReqs.map(l => l.cumReq)
     let friendship = 0
     let clearedIdx = 0
     /** The level the spirit is actually on — the lowest it has not cleared. */
@@ -276,14 +299,16 @@ export function buildSchedule(result: SolveResult, rules: Rules): DayRow[] {
     function absorb(gain: number) {
       friendship += gain
       const cleared: number[] = []
+      const unlocked: number[] = []
       const skips: { lvl: number; cost: number }[] = []
       while (clearedIdx < levelReqs.length && friendship >= levelReqs[clearedIdx].cumReq - EPS) {
         const lvl = levelReqs[clearedIdx].lvl
         cleared.push(lvl)
+        unlocked.push(levelReqs[clearedIdx + 1]?.lvl ?? 5)
         for (const cost of mySkips.get(lvl) ?? []) skips.push({ lvl, cost })
         clearedIdx++
       }
-      return { cleared, skips }
+      return { cleared, unlocked, skips }
     }
 
     const remaining = new Set(myGroups)
@@ -291,7 +316,7 @@ export function buildSchedule(result: SolveResult, rules: Rules): DayRow[] {
       const hasInvite = myInvites.some(v => v.day === d)
       const todays = myGroups.filter(g => g.day === d).sort((a, b) => a.lvl - b.lvl)
       const out: Step[] = []
-      const blank = { day: d, balance: 0, ultimates: [] as number[] }
+      const blank = { day: d, balance: 0, ultimates: [] as number[], total, marks }
 
       // One step per item, not per level: each unlock is its own action with its
       // own share of the level's friendship, which is what the sequence is for.
@@ -300,7 +325,7 @@ export function buildSchedule(result: SolveResult, rules: Rules): DayRow[] {
         remaining.delete(g)
         g.costs.forEach((c, idx) => {
           const req = required()
-          const { cleared, skips } = absorb(perItem)
+          const { cleared, unlocked, skips } = absorb(perItem)
           out.push({
             ...blank,
             kind: g.isHeart ? 'heart' : 'buy',
@@ -311,6 +336,7 @@ export function buildSchedule(result: SolveResult, rules: Rules): DayRow[] {
             after: friendship,
             required: req,
             cleared,
+            unlocked,
             skips,
             completes: remaining.size === 0 && idx === g.costs.length - 1,
           })
@@ -323,7 +349,7 @@ export function buildSchedule(result: SolveResult, rules: Rules): DayRow[] {
         // meant to precede, and a phase label would then name the wrong level.
         const lvl = workingLvl()
         const req = required()
-        const { cleared, skips } = absorb(1)
+        const { cleared, unlocked, skips } = absorb(1)
         out.push({
           ...blank,
           kind: 'invite',
@@ -334,6 +360,7 @@ export function buildSchedule(result: SolveResult, rules: Rules): DayRow[] {
           after: friendship,
           required: req,
           cleared,
+          unlocked,
           skips,
           completes: false,
         })
@@ -381,7 +408,10 @@ export function buildSchedule(result: SolveResult, rules: Rules): DayRow[] {
       gain: 0,
       after: 0,
       required: 0,
+      total: 0,
+      marks: [],
       cleared: [],
+      unlocked: [],
       skips: [],
       completes: false,
       balance: 0,
