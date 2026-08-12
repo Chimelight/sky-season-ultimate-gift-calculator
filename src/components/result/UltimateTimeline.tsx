@@ -30,11 +30,6 @@ export function UltimateTimeline({ result, ultimates }: {
   const span = Math.max(1, best.Tmax)
   const at = (d: number) => Math.min(100, Math.max(0, (d / span) * 100))
   const pct = (d: number) => `${at(d)}%`
-  /** Near an end, anchor to that edge; a centred label there hangs outside. */
-  const anchor = (d: number) => {
-    const x = at(d)
-    return x < 6 ? 'translate-x-0' : x > 94 ? '-translate-x-full' : '-translate-x-1/2'
-  }
 
   // Today, when it falls inside the plan — so the axis also answers "how far
   // along am I", which is most of why anyone opens this.
@@ -57,7 +52,11 @@ export function UltimateTimeline({ result, ultimates }: {
       <div className="rounded-lg border bg-card px-4 pt-5 pb-3">
         {/* Today sits above the track and the day numbers below it, so the two
             never compete for the same line — at 380px they were touching. */}
-        <div className="relative h-[3.4rem] px-2.5">
+        {/* Margin, not padding: `left: X%` on an absolutely positioned child
+            resolves against the containing block's *padding box*, which
+            includes the padding — so px-* does not inset these at all, and the
+            last label hung outside the card. Margin narrows the box itself. */}
+        <div className="relative h-[4.1rem] mx-7">
           <div className="absolute inset-x-0 top-[1.5rem] h-1 rounded-full bg-muted" />
           {today !== null && (
             <div
@@ -68,7 +67,7 @@ export function UltimateTimeline({ result, ultimates }: {
 
           {today !== null && (
             <div
-              className={`absolute top-0 flex flex-col items-center ${anchor(today)}`}
+              className="absolute top-0 flex -translate-x-1/2 flex-col items-center"
               style={{ left: pct(today) }}
             >
               <span className="text-[0.62rem] leading-tight text-primary whitespace-nowrap">
@@ -101,24 +100,28 @@ export function UltimateTimeline({ result, ultimates }: {
             )
           })}
 
+          {/* Centred like the marker above it — anchoring these to the card edge
+              instead put the last one out of line with its own dot. */}
           {best.Ts.map((T, i) => (
             <span
               key={i}
-              className={`absolute top-[2.6rem] text-[0.65rem] leading-none tabular-nums whitespace-nowrap ${
-                anchor(T)
-              } ${i === targetIdx ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
+              className={`absolute top-[2.55rem] flex -translate-x-1/2 flex-col items-center leading-tight whitespace-nowrap ${
+                i === targetIdx ? 'text-foreground' : 'text-muted-foreground'
+              }`}
               style={{ left: pct(T) }}
             >
-              {T}
+              <span className={`text-[0.68rem] tabular-nums ${i === targetIdx ? 'font-bold' : 'font-medium'}`}>
+                {t('day_prefix', { n: T })}
+              </span>
+              <span className="text-[0.62rem] text-muted-foreground">{dayDate(T)}</span>
             </span>
           ))}
         </div>
 
-        <div className="flex justify-between gap-2 border-t pt-1.5 text-[0.68rem] text-muted-foreground tabular-nums">
-          <span>{t('day_prefix', { n: 1 })}</span>
-          <span className="text-right">
-            {t('day_prefix', { n: best.Tmax })} · {dayDate(best.Tmax)}
-          </span>
+        {/* Only the start needs anchoring: Tmax is the last ultimate's own day,
+            so the right end is always already labelled by its marker. */}
+        <div className="border-t pt-1.5 text-[0.68rem] text-muted-foreground tabular-nums">
+          {t('day_prefix', { n: 1 })} · {dayDate(1)}
         </div>
 
         {/* the dots are graphics; this is the same content as text */}
