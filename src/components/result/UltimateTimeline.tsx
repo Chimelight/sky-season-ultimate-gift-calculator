@@ -7,6 +7,11 @@ import type { SolveResult } from '@/lib/solver'
 /**
  * The ultimates on one day axis.
  *
+ * No axis end-labels: every marker carries its own day and date, so a "Day 1 ·
+ * Jul 17" caption underneath only restated what the markers already say, and
+ * once the right end went (Tmax is by definition the last marker's own day) the
+ * left one was an orphan row with a rule above it.
+ *
  * The metric cards give each gift's day exactly; what a column of numbers
  * cannot show is the *spacing* — how long the wait is between one and the next.
  * That spacing is what redemption order changes, so dragging a row has an
@@ -49,7 +54,7 @@ export function UltimateTimeline({ result, ultimates }: {
   return (
     <div className="space-y-2">
       <h3 id="timeline-heading" className="text-sm font-semibold">{t('section_timeline')}</h3>
-      <div className="rounded-lg border bg-card px-4 pt-5 pb-3">
+      <div className="rounded-lg border bg-card px-4 pt-5 pb-4">
         {/* Today sits above the track and the day numbers below it, so the two
             never compete for the same line — at 380px they were touching. */}
         {/* Margin, not padding: `left: X%` on an absolutely positioned child
@@ -116,12 +121,6 @@ export function UltimateTimeline({ result, ultimates }: {
               <span className="text-[0.62rem] text-muted-foreground">{dayDate(T)}</span>
             </span>
           ))}
-        </div>
-
-        {/* Only the start needs anchoring: Tmax is the last ultimate's own day,
-            so the right end is always already labelled by its marker. */}
-        <div className="border-t pt-1.5 text-[0.68rem] text-muted-foreground tabular-nums">
-          {t('day_prefix', { n: 1 })} · {dayDate(1)}
         </div>
 
         {/* the dots are graphics; this is the same content as text */}
