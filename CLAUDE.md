@@ -107,6 +107,57 @@ Do not attribute a spirit's whole cost to its completion day. It reads plausibly
 
 **Adding a language**: Create `src/i18n/<code>.ts` following the structure of an existing file (export `translations`, `ordinal`, `dateLocale`). Then add an import and entry in `src/i18n/index.ts` (`TRANSLATIONS`, `ORDINALS`, `DATE_LOCALES`, `LANGS`).
 
+## Commits and Branches
+
+A branch name is a promise about what is inside it. `feat/react` broke that
+promise once already: it carried eleven commits, of which the friendship-model
+generalisation, the daily breakdown, a UI-freeze fix and a blank-page fix had
+nothing to do with migrating to React, and it merged that way. The cost is not
+tidiness — it is that nobody can revert, review or describe a slice of it later.
+
+**One branch, one theme, and the name covers all of it.** If the work drifts —
+and it will, because a review comment or a bug found mid-flight is not the thing
+you set out to do — do not widen the name. Cut a new branch at the current tip
+and keep going there:
+
+```bash
+git branch feat/next-thing        # from the current tip, no rebase, no conflict
+git checkout feat/next-thing
+```
+
+That leaves a stack: `main ← first ← second ← third`, each PR based on the one
+before. History stays linear, so splitting after the fact is equally cheap —
+`git branch <name> <sha>` at the boundaries, then move the original label back
+with `git branch -f`. Nothing is rewritten and no commit is touched.
+
+**Every branch in a stack must pass on its own.** They merge in order, so an
+intermediate state that fails leaves `main` broken between merges. Before
+opening the PRs:
+
+```bash
+for b in <each branch>; do
+  git checkout -q $b && npm run build && npm run check:model && npm run check:responsive
+done
+```
+
+Check the exit code, not the last line of output — `tail -1` catches a blank
+line and reports a passing check as failed.
+
+**One commit, one decision that could be reverted alone.** The message says what
+changed and *why it is right*, including what was tried and rejected; the diff
+already says what changed. Where a commit fixes something the user reported,
+name the actual cause rather than the symptom.
+
+End every commit message with the co-author line for the model that did the
+work, e.g.:
+
+```
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+```
+
+`main` and `release` are both protected and reject direct pushes, so everything
+lands through a PR (see `.claude/commands/release.md` for the promotion flow).
+
 ## Design Tokens
 
 These conventions are intentional — do not deviate without a reason.
