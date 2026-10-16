@@ -47,6 +47,21 @@ export interface Season {
 
 export const SEASONS: Season[] = [
   {
+    id: 'season-of-pearl',
+    label: '2026 Season of Pearl',
+    seasonName: 'Season of Pearl',
+    startDate: '2026-10-16',
+    rules: { cpd:6, pass:30, heart:3, l1f:4, l2f:6, l3f:8, l4f:10 },
+    spirits: [
+      { name: 'Wrestling Sailor',     levels: [[4], [18],    [8, 10],  [32]] },
+      { name: 'Showy Merchant',       levels: [[4], [18, 7], [28, 8],  [32]] },
+      { name: 'Hesitant Angler',      levels: [[4], [18, 7], [28, 8],  [32]] },
+      { name: 'Cuddly Rolling Child', levels: [[4], [18, 7], [28, 24], [12]] },
+    ],
+    ultimates: [{ hearts: 1 }, { hearts: 1 }, { hearts: 2 }],
+    targetIdx: 2,
+  },
+  {
     id: 'season-of-dear-van-gogh',
     label: '2026 Dear Van Gogh',
     seasonName: 'Dear Van Gogh',
